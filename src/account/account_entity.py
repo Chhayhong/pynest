@@ -3,10 +3,10 @@ from sqlalchemy import Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 
-class Users(config.Base):
-    __tablename__ = "users"
+class Account(config.Base):
+    __tablename__ = "account"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    account_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     username = mapped_column(String, unique=True, index=True,nullable=False)
     email = mapped_column(String, unique=True,nullable=False)
     password = mapped_column(String(255), nullable=False)

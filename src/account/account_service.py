@@ -1,5 +1,5 @@
-from .users_model import LoginCrediential, UserCreate
-from .users_entity import Users as UsersEntity
+from .account_model import AccountCreate, LoginCrediential
+from .account_entity import Account as AccountEntity
 from nest.core.decorators.database import async_db_request_handler
 from nest.core import Injectable
 
@@ -21,43 +21,44 @@ ACCESS_REFRESH_TOKEN_MINUTES = int(os.getenv("ACCESS_REFRESH_TOKEN_MINUTES"))
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 @Injectable
-class UsersService:
+class AccountService:
 
     @async_db_request_handler
-    async def add_user(self, user: UserCreate, session: AsyncSession):
-        new_user = UsersEntity(
-            **user.model_dump()
+    async def add_account(self, account: AccountCreate, session: AsyncSession):
+        new_user = AccountEntity(
+            **account.model_dump()
         )
-        new_user.password = self.get_password_hash(user.password)
+        new_user.password = self.get_password_hash(account.password)
         session.add(new_user)
         await session.commit()
-        return new_user.id
+        return new_user.account_id
 
     @async_db_request_handler
-    async def get_users(self, session: AsyncSession):
-        query = select(UsersEntity)
+    async def get_accounts(self, session: AsyncSession):
+        query = select(AccountEntity)
         result = await session.execute(query)
         return result.scalars().all()
     @async_db_request_handler
-    async def authenticate_user(self, user: LoginCrediential, session: AsyncSession):
-        query = select(UsersEntity).where(
-        UsersEntity.username == user.username,
-        UsersEntity.password == self.get_password_hash(user.password)
+    async def authenticate_account(self, account: LoginCrediential, session: AsyncSession):
+        query = select(AccountEntity).where(
+        AccountEntity.username == account.username,
+        AccountEntity.password == self.get_password_hash(account.password)
         )
         result = await session.execute(query)
         return result.scalars().first()
     
     @async_db_request_handler
-    async def check_user_exist(self,user:UserCreate, session: AsyncSession):
-        query = select(UsersEntity).where(
-        UsersEntity.username == user.username)
+    async def check_account_exist(self,account:AccountCreate, session: AsyncSession):
+        query = select(AccountEntity).where(
+        AccountEntity.username == account.username
+        )
         result = await session.execute(query)
         return result.scalars().one_or_none()
     
     @async_db_request_handler
     async def check_username_exist(self,username:str, session: AsyncSession):
-        query = select(UsersEntity).where(
-        UsersEntity.username == username)
+        query = select(AccountEntity).where(
+        AccountEntity.username == username)
         result = await session.execute(query)
         return result.scalars().first()
 
@@ -87,13 +88,13 @@ class UsersService:
     @async_db_request_handler
     async def generate_refresh_token(self, username: str, session: AsyncSession):
         print(username,'username')
-        query = select(UsersEntity).where(
-        UsersEntity.username == username)
+        query = select(AccountEntity).where(
+        AccountEntity.username == username)
         result = await session.execute(query)
-        user = result.scalars().one_or_none()    
-        if user:
-            refresh_token = self.create_refresh_token({"sub": user.username})
-            user.refresh_token = refresh_token
+        account = result.scalars().one_or_none()    
+        if account:
+            refresh_token = self.create_refresh_token({"sub": account.username})
+            account.refresh_token = refresh_token
             await session.commit()
             return refresh_token
         else:
@@ -101,11 +102,11 @@ class UsersService:
 
     @async_db_request_handler
     async def refresh_access_token(self, refresh_token: str, session: AsyncSession):
-        query = select(UsersEntity).where(UsersEntity.refresh_token == refresh_token)
-        user = await session.execute(query).scalar()
+        query = select(AccountEntity).where(AccountEntity.refresh_token == refresh_token)
+        account = await session.execute(query).scalar()
 
-        if user:
-            access_token = self.create_access_token({"sub": user.username})
+        if account:
+            access_token = self.create_access_token({"sub": account.username})
             return access_token
         else:
             return None
@@ -115,5 +116,4 @@ class UsersService:
         expire = datetime.utcnow() + timedelta(hours=ACCESS_REFRESH_TOKEN_MINUTES) 
         to_encode.update({"exp": expire})
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-        print(encoded_jwt,'Weee')
         return encoded_jwt
