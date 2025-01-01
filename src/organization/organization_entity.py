@@ -1,8 +1,7 @@
 from datetime import datetime
-from sqlalchemy import Integer, String, ForeignKey
-from sqlalchemy.orm import Mapped, relationship, mapped_column
+from sqlalchemy import Integer, String
+from sqlalchemy.orm import Mapped, mapped_column
 from src.config import config
-from src.users.users_entity import Users
 
 class Organization(config.Base):
     __tablename__ = "organization"
