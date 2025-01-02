@@ -23,4 +23,6 @@ class OrganizationUpdate(BaseModel):
     phone: str 
     updated_at: datetime = datetime.now()
 
+class DeleteOrganization(BaseModel):
+    detail: str = "Organization deleted successfully"
 

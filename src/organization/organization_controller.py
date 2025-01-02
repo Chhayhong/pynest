@@ -7,7 +7,7 @@ from src.config import config
 
 
 from .organization_service import OrganizationService
-from .organization_model import OrganizationCreate, OrganizationResponse, OrganizationUpdate
+from .organization_model import DeleteOrganization, OrganizationCreate, OrganizationResponse, OrganizationUpdate
 
 
 @Controller("v1/organization", tag="organization")
@@ -35,7 +35,7 @@ class OrganizationController:
             raise HTTPException(status_code=404, detail="Organization not found")
         return result
     
-    @Post("/delete", response_model=str)
+    @Post("/delete", response_model=DeleteOrganization)
     async def delete_organization(self, organization_id: int, session: AsyncSession=Depends(config.get_db),current_account_id: int = Depends(get_current_account)):
         organization = await self.organization_service.get_organization_by_id(organization_id, session)
         if organization is None:
@@ -45,9 +45,14 @@ class OrganizationController:
         if is_failed:
             raise HTTPException(status_code=500, detail="Failed to delete organization")
         
-        return {"message": "Organization deleted successfully"}
+        return {"detail": "Organization deleted successfully"}
     
-    @Post("/search")
+    @Get("/search/{name}")
     async def search_organization(self, name: str, session: AsyncSession = Depends(config.get_db),current_account_id: int = Depends(get_current_account)):
-        return await self.organization_service.search_organization(current_account_id,name, session)
+        return await self.organization_service.search_organization_by_account_id(current_account_id,name, session)
  
+    @Get("/search/public/{name}")
+    async def search_organization_public(self, name: str, session: AsyncSession = Depends(config.get_db)):
+        return await self.organization_service.search_organization(name, session)
+    
+    

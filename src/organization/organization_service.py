@@ -112,6 +112,14 @@ class OrganizationService:
         query = select(OrganizationEntity).filter(OrganizationEntity.name.ilike(f'%{organization_name}%'))
         result = await session.execute(query)
         return result.scalars().all()
+    @async_db_request_handler
+    async def search_organization_by_account_id(self, account_id: int, organization_name: str, session: AsyncSession):
+        query = select(OrganizationEntity).join(AccountOrganizationEntity).where(
+            AccountOrganizationEntity.account_id == account_id,
+            OrganizationEntity.name.ilike(f'%{organization_name}%')
+        )
+        result = await session.execute(query)
+        return result.scalars().all()
     
     @async_db_request_handler
     async def get_organization_by_id(self, organization_id: int, session: AsyncSession):
