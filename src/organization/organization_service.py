@@ -32,7 +32,6 @@ class OrganizationService:
     @async_db_request_handler
     async def update_organization(self, organization_id: int,organization_payload:OrganizationCreate, session: AsyncSession):
         organization =await self.check_organization_exist(organization_id,session)
-        print(organization,"GGggggg")
         if organization is None:
             return None
         organization.name = organization_payload.name

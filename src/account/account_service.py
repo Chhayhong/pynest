@@ -25,19 +25,17 @@ class AccountService:
 
     @async_db_request_handler
     async def add_account(self, account: AccountCreate, session: AsyncSession):
+        account_data = account.model_dump()
+        account_data.pop("password_confirmation", None)
+    
         new_user = AccountEntity(
-            **account.model_dump()
+            **account_data
         )
         new_user.password = self.get_password_hash(account.password)
         session.add(new_user)
         await session.commit()
         return new_user.account_id
 
-    @async_db_request_handler
-    async def get_accounts(self, session: AsyncSession):
-        query = select(AccountEntity)
-        result = await session.execute(query)
-        return result.scalars().all()
     @async_db_request_handler
     async def authenticate_account(self, account: LoginCrediential, session: AsyncSession):
         query = select(AccountEntity).where(
@@ -85,6 +83,7 @@ class AccountService:
         except jwt.PyJWTError:
             return None
         
+        
     @async_db_request_handler
     async def generate_refresh_token(self, username: str, session: AsyncSession):
         print(username,'username')
@@ -106,7 +105,7 @@ class AccountService:
         account = await session.execute(query).scalar()
 
         if account:
-            access_token = self.create_access_token({"sub": account.username})
+            access_token = self.create_access_token({"sub": account.username,"role":account.role,"account_id":str(account.account_id)})
             return access_token
         else:
             return None

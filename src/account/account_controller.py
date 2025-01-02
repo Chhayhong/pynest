@@ -6,19 +6,15 @@ from src.config import config
 
 
 from .account_service import AccountService
-from .account_model import LoginCrediential, Account, AccountCreate, Token as TokenModel
+from .account_model import Account, AccountCreate, LogoutSuccess, Token as TokenModel
+from fastapi.security import OAuth2PasswordRequestForm
 
 
-@Controller("account", tag="account")
+@Controller("v1/account", tag="account")
 class AccountController:
 
     def __init__(self, account: AccountService):
         self.account = account
-
-    @Get("/", response_model=List[Account])
-    async def get_accounts(self, session: AsyncSession = Depends(config.get_db)):
-        accounts = await self.account.get_accounts(session)
-        return accounts
 
     @Post("/")
     async def register(self, account: AccountCreate, session: AsyncSession = Depends(config.get_db)):
@@ -29,16 +25,15 @@ class AccountController:
         return new_account
     
     @Post("/token", response_model=TokenModel)
-    async def login(self, account: LoginCrediential, session: AsyncSession = Depends(config.get_db)):
+    async def login_for_token(self, account:OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(config.get_db)):
         account_exist = await self.account.check_account_exist(account, session)
         if not account_exist:
             raise HTTPException(status_code=401, detail="Account does not exist")
         print(account_exist.password)
         if not self.account.verify_password(account.password, account_exist.password):
             raise HTTPException(status_code=401, detail="Incorrect password")
-        access_token = self.account.create_access_token({"sub": account.username})
+        access_token = self.account.create_access_token({"sub": account.username,"role":account_exist.role,"account_id":str(account_exist.account_id)})
         refresh_token = await self.account.generate_refresh_token(account_exist.username, session)
-        print(refresh_token,'The refresh token')
         return {"access_token": access_token, "token_type": "bearer", "refresh_token": refresh_token}
     
     @Get("/me", response_model=Account)
@@ -53,7 +48,7 @@ class AccountController:
         
         return account
     
-    @Post("/logout")
+    @Post("/logout",response_model=LogoutSuccess)
     async def logout(self, token: str, session: AsyncSession = Depends(config.get_db)):
         username = self.account.verify_token(token)
         if username is None:
@@ -66,3 +61,4 @@ class AccountController:
         account.refresh_token = None
         await session.commit()
         return {"detail": "Logged out successfully"}
+        

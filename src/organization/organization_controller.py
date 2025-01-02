@@ -9,7 +9,7 @@ from .organization_service import OrganizationService
 from .organization_model import OrganizationCreate, OrganizationResponse, OrganizationUpdate
 
 
-@Controller("organization", tag="organization")
+@Controller("v1/organization", tag="organization")
 class OrganizationController:
 
     def __init__(self, organization_service: OrganizationService):

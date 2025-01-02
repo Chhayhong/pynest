@@ -1,4 +1,4 @@
-from nest.core import Controller, Get, Post
+from nest.core import Controller
 from .app_service import AppService
 
 
@@ -8,6 +8,3 @@ class AppController:
     def __init__(self, service: AppService):
         self.service = service
 
-    @Get("/")
-    def get_app_info(self):
-        return self.service.get_app_info()
