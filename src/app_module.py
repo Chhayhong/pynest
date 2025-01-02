@@ -1,14 +1,14 @@
 from nest.core import PyNestFactory, Module
-
 from .account.account_module import AccountModule
 from .config import config
 from .app_controller import AppController
 from .app_service import AppService
 from src.organization.organization_module import OrganizationModule
+from src.event_management.event_management_module import EventManagementModule
 
 
 @Module(
-    imports=[AccountModule, OrganizationModule],
+    imports=[AccountModule, OrganizationModule, EventManagementModule],
     controllers=[AppController],
     providers=[AppService],
 )

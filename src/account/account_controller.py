@@ -29,7 +29,6 @@ class AccountController:
         account_exist = await self.account.check_account_exist(account, session)
         if not account_exist:
             raise HTTPException(status_code=401, detail="Account does not exist")
-        print(account_exist.password)
         if not self.account.verify_password(account.password, account_exist.password):
             raise HTTPException(status_code=401, detail="Incorrect password")
         access_token = self.account.create_access_token({"sub": account.username,"role":account_exist.role,"account_id":str(account_exist.account_id)})
