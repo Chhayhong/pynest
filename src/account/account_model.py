@@ -33,7 +33,7 @@ class AccountCreate(BaseModel):
 class Account(BaseModel):
     account_id: int
     username: str 
-    email: EmailStr = Field(exclude=True)
+    email: Optional[EmailStr] 
     role: str = "user"
     class Config:
         orm_mode = True

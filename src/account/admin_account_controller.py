@@ -4,7 +4,7 @@ from nest.core import Controller
 from nest.core import Controller, Get, Depends, Post
 from .admin_account_service import AdminAccountService
 from .account_model import AccountUpdateStatus, AccountsResponse
-from .authorization_utils import get_current_account,Not_Authorized_Message
+from ..authorization_utils import get_current_account,Not_Authorized_Message
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.config import config
 

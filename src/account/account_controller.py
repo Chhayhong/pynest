@@ -6,7 +6,7 @@ from src.config import config
 
 
 from .account_service import AccountService
-from .account_model import Account, AccountCreate, LogoutSuccess, Token as TokenModel
+from .account_model import Account, AccountCreate, Token as TokenModel
 from fastapi.security import OAuth2PasswordRequestForm
 
 
@@ -48,7 +48,7 @@ class AccountController:
         
         return account
     
-    @Post("/logout",response_model=LogoutSuccess)
+    @Post("/logout")
     async def logout(self, token: str, session: AsyncSession = Depends(config.get_db)):
         username = self.account.verify_token(token)
         if username is None:
