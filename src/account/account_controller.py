@@ -2,6 +2,7 @@ from fastapi import HTTPException
 from typing import List
 from nest.core import Controller, Get, Post, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
+from ..annotation.http_status_code_500_exception import handle_status_code_500_exceptions
 from src.config import config
 
 
@@ -17,6 +18,7 @@ class AccountController:
         self.account = account
 
     @Post("/")
+    @handle_status_code_500_exceptions
     async def register(self, account: AccountCreate, session: AsyncSession = Depends(config.get_db)):
         account_exist = await self.account.check_account_exist(account, session)
         if account_exist:
@@ -25,6 +27,7 @@ class AccountController:
         return new_account
     
     @Post("/token", response_model=TokenModel)
+    @handle_status_code_500_exceptions
     async def login_for_token(self, account:OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(config.get_db)):
         account_exist = await self.account.check_account_exist(account, session)
         if not account_exist:
@@ -36,6 +39,7 @@ class AccountController:
         return {"access_token": access_token, "token_type": "bearer", "refresh_token": refresh_token}
     
     @Get("/me", response_model=Account)
+    @handle_status_code_500_exceptions
     async def get_current_account(self, token: str, session: AsyncSession = Depends(config.get_db)):
         username = self.account.verify_token(token)
         if username is None:
@@ -48,6 +52,7 @@ class AccountController:
         return account
     
     @Post("/logout")
+    @handle_status_code_500_exceptions
     async def logout(self, token: str, session: AsyncSession = Depends(config.get_db)):
         username = self.account.verify_token(token)
         if username is None:

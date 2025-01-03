@@ -11,11 +11,6 @@ class OrganizationService:
 
     @async_db_request_handler
     async def add_organization(self,creator_account_id:int, organization: OrganizationCreate, session: AsyncSession):
-        query = select(OrganizationEntity).where(OrganizationEntity.name == organization.name)
-        existing_organization = await session.execute(query)
-        if existing_organization.scalars().first():
-            raise ValueError("Organization with the same name already exists.")
-    
         new_organization = OrganizationEntity(
             **organization.model_dump()
         )

@@ -26,7 +26,6 @@ class EventManagement(config.Base):
     event_setting = mapped_column(JSONB)
     event_type = mapped_column(String,default="Offline",index=True)
     event_language = mapped_column(String,default="Khmer",index=True)
-    event_privacy = mapped_column(String,default="Private",index=True)
     created_at: Mapped[datetime] = mapped_column(default=datetime.now)
     updated_at: Mapped[datetime] = mapped_column(default=datetime.now, onupdate=datetime.now)
 
