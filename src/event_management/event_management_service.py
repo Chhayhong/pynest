@@ -1,4 +1,4 @@
-from .event_management_model import EventManagement
+from .event_management_model import EventManagementCreate
 from .event_management_entity import EventManagement as EventManagementEntity
 from ..organization.organization_entity import Organization as OrganizationEntity, AccountOrganization as AccountOrganizationEntity
 from nest.core.decorators.database import async_db_request_handler
@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 class EventManagementService:
 
     @async_db_request_handler
-    async def add_event_management(self,organization_id:int, event_management: EventManagement, session: AsyncSession):
+    async def add_event_management(self,organization_id:int, event_management: EventManagementCreate, session: AsyncSession):
         new_event_management = EventManagementEntity(
             **event_management.model_dump()
         )
@@ -79,4 +79,28 @@ class EventManagementService:
         )
         result = await session.execute(query)
         return result.scalars().first()
+    
+    @async_db_request_handler
+    async def get_public_events(self, session: AsyncSession, limit: int = 100, offset: int = 0):
+        query = select(EventManagementEntity).where(
+            EventManagementEntity.privacy == "Public"
+        ).limit(limit).offset(offset)
+        result = await session.execute(query)
+        event_managements = result.scalars().all()
+        
+        total_query = select(func.count(EventManagementEntity.event_id)).where(
+            EventManagementEntity.privacy == "Public"
+        )
+        total_result = await session.execute(total_query)
+        total = total_result.scalar_one()
+
+        next_offset = (int(offset or 0) + int(limit or 0)) if (int(offset or 0) + int(limit or 0)) < int(total) else None
+        previous_offset = (int(offset or 0) - int(limit or 0)) if (int(offset or 0) - int(limit or 0)) >= 0 else None
+
+        return {
+            "items": [event_management.__dict__ for event_management in event_managements],
+            "previous": int(previous_offset or 0),
+            "next": int(next_offset or 0),
+            "total": int(total or 0)
+        }
     

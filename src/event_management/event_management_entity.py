@@ -21,6 +21,7 @@ class EventManagement(config.Base):
     sponsor = mapped_column(JSONB)
     partner = mapped_column(JSONB)
     status = mapped_column(String,default="draft",index=True)
+    privacy = mapped_column(String,default="Private",index=True)
     seat_limit:Mapped[int] = mapped_column(Integer,default=0)
     event_setting = mapped_column(JSONB)
     event_type = mapped_column(String,default="Offline",index=True)
@@ -38,6 +39,6 @@ class EventManagementBasicCreate(config.Base):
     end_time: Mapped[datetime]
     location: Mapped[str]
     google_map: Mapped[str]
-    status: Mapped[str] = mapped_column(default="draft", index=True)
+    status: Mapped[str] = mapped_column(default="draft")
     created_at: Mapped[datetime] = mapped_column(default=datetime.now)
     updated_at: Mapped[datetime] = mapped_column(default=datetime.now, onupdate=datetime.now)
