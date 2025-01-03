@@ -6,6 +6,7 @@ class OrganizationCreate(BaseModel):
     description: str
     address: str
     phone: str
+    privacy: str
 
 class OrganizationResponse(BaseModel):
     organization_id: int
@@ -13,6 +14,7 @@ class OrganizationResponse(BaseModel):
     description: str
     address: str
     phone: str
+    privacy:str
     created_at: datetime = datetime.now()
     updated_at: datetime = datetime.now()
 
@@ -21,7 +23,7 @@ class OrganizationUpdate(BaseModel):
     description: str 
     address: str 
     phone: str 
-    updated_at: datetime = datetime.now()
+    privacy: str
 
 class DeleteOrganization(BaseModel):
     detail: str = "Organization deleted successfully"

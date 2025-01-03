@@ -4,7 +4,7 @@ from nest.core.decorators.database import async_db_request_handler
 
 from .account_model import AccountUpdateStatus
 from .account_entity import Account as AccountEntity
-from sqlalchemy import select
+from sqlalchemy import func, select
 import os
 
 SECRET_KEY = os.getenv("SECRET_KEY")
@@ -14,10 +14,22 @@ ALGORITHM = os.getenv("ALGORITHM")
 class AdminAccountService:
      
     @async_db_request_handler
-    async def get_accounts(self, session: AsyncSession):
-        query = select(AccountEntity)
+    async def get_accounts(self,session: AsyncSession,limit:int,offset:int):
+        query = select(AccountEntity).offset(offset).limit(limit)
         result = await session.execute(query)
-        return result.scalars().all()
+        accounts = result.scalars().all()
+        total = await session.execute(select(func.count()).select_from(AccountEntity))
+        total = total.scalar()
+        previous_offset = offset - limit if offset - limit >= 0 else None
+        next_offset = offset + limit if offset + limit < total else None
+
+        return {
+            "items": accounts,
+            "previous": int(previous_offset or 0),
+            "next": int(next_offset or 0),
+            "total": int(total or 0)
+        }
+        
     
     @async_db_request_handler
     async def get_account(self, account_id: int, session: AsyncSession):

@@ -11,9 +11,9 @@ class Organization(config.Base):
     description: Mapped[str] = mapped_column(String(512))
     address: Mapped[str] = mapped_column(String(255))
     phone: Mapped[str] = mapped_column(String(68))
+    privacy: Mapped[str] = mapped_column(String, default="Private",index=True)
     created_at: Mapped[datetime] = mapped_column(default=datetime.now)
     updated_at: Mapped[datetime] = mapped_column(default=datetime.now, onupdate=datetime.now)
-
 class AccountOrganization(config.Base):
     __tablename__ = 'account_organization'
 

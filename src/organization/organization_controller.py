@@ -10,7 +10,7 @@ from .organization_service import OrganizationService
 from .organization_model import DeleteOrganization, OrganizationCreate, OrganizationResponse, OrganizationUpdate
 
 
-@Controller("v1/organization", tag="organization")
+@Controller("v1/organization", tag="Organization management")
 class OrganizationController:
 
     def __init__(self, organization_service: OrganizationService):
@@ -54,5 +54,9 @@ class OrganizationController:
     @Get("/search/public/{name}")
     async def search_organization_public(self, name: str, session: AsyncSession = Depends(config.get_db)):
         return await self.organization_service.search_organization(name, session)
+    
+    @Get("/organization/public")
+    async def get_organization_public(self, session: AsyncSession = Depends(config.get_db)):
+        return await self.organization_service.get_organizations_public(session)
     
     

@@ -1,4 +1,4 @@
-from .organization_model import OrganizationCreate
+from .organization_model import OrganizationCreate, OrganizationUpdate
 from .organization_entity import Organization as OrganizationEntity, AccountOrganization as AccountOrganizationEntity
 from nest.core.decorators.database import async_db_request_handler
 from nest.core import Injectable
@@ -32,8 +32,8 @@ class OrganizationService:
         return new_organization.__dict__
 
     @async_db_request_handler
-    async def get_organization(self, session: AsyncSession):
-        query = select(OrganizationEntity)
+    async def get_organizations_public(self, session: AsyncSession):
+        query = select(OrganizationEntity).where(OrganizationEntity.privacy =="Public")
         result = await session.execute(query)
         return result.scalars().all()
     
@@ -44,7 +44,7 @@ class OrganizationService:
         return result.scalars().all()
     
     @async_db_request_handler
-    async def update_organization(self, organization_id: int, account_id: int, organization_payload: OrganizationCreate, session: AsyncSession):
+    async def update_organization(self, organization_id: int, account_id: int, organization: OrganizationUpdate, session: AsyncSession):
         organization_exist = await self.check_organization_exist(organization_id, session)
         if organization_exist is None:
             return None
@@ -57,14 +57,8 @@ class OrganizationService:
         if account_organization.scalars().one_or_none() is None:
             return None
         
-        # Update the organization details
-        organization_exist.name = organization_payload.name
-        if hasattr(organization_payload, 'description'):
-            organization_exist.description = organization_payload.description
-        if hasattr(organization_payload, 'address'):
-            organization_exist.address = organization_payload.address
-        if hasattr(organization_payload, 'phone'):
-            organization_exist.phone = organization_payload.phone
+        for key, value in organization.model_dump().items():
+            setattr(organization_exist, key, value)
         
         await session.commit()
         return organization_exist

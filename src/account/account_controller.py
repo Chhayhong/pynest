@@ -10,7 +10,7 @@ from .account_model import Account, AccountCreate, Token as TokenModel
 from fastapi.security import OAuth2PasswordRequestForm
 
 
-@Controller("v1/account", tag="account")
+@Controller("v1/account", tag="Account management")
 class AccountController:
 
     def __init__(self, account: AccountService):
