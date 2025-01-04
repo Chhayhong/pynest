@@ -11,18 +11,19 @@ class OrganizationService:
 
     @async_db_request_handler
     async def add_organization(self,creator_account_id:int, organization: OrganizationCreate, session: AsyncSession):
-        new_organization = OrganizationEntity(
+        async with session.begin():
+            new_organization = OrganizationEntity(
             **organization.model_dump()
-        )
-        session.add(new_organization)
-        await session.flush()  # Ensure the new organization gets an ID
+            )
+            session.add(new_organization)
+            await session.flush()  # Ensure the new organization gets an ID
 
-        account_organization = AccountOrganizationEntity(
+            account_organization = AccountOrganizationEntity(
             account_id=creator_account_id,
             organization_id=new_organization.organization_id
-        )
-        session.add(account_organization)
-        session.add(new_organization)
+            )
+            session.add(account_organization)
+        
         await session.commit()
         return new_organization.__dict__
 
@@ -114,3 +115,4 @@ class OrganizationService:
         query = select(OrganizationEntity).where(OrganizationEntity.organization_id == organization_id)
         result = await session.execute(query)
         return result.scalars().one_or_none()
+    

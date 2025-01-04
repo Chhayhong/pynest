@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..annotation.http_status_code_500_exception import handle_status_code_500_exceptions
 from ..authorization_utils import get_current_account
 from src.config import config
+from ..authorization_utils import Not_Authorized_Message
 
 
 from .event_management_service import EventManagementService
@@ -28,7 +29,7 @@ class EventManagementController:
     async def add_event_management(self, organization_id:int,event_management: EventManagementCreate, session: AsyncSession = Depends(config.get_db),current_account_id: int = Depends(get_current_account)):
         is_account_owned_organization = await self.event_management_service.get_organization_account_owner(organization_id,current_account_id,session)
         if not is_account_owned_organization:
-            raise HTTPException(status_code=403, detail="Not enough permissions")
+            raise HTTPException(status_code=403, detail=Not_Authorized_Message)
         return await self.event_management_service.add_event_management(organization_id,event_management, session)
     
     @Get("/event/public")

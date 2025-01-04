@@ -19,4 +19,4 @@ class AccountOrganization(config.Base):
 
     account_organization_id = mapped_column(Integer, primary_key=True)
     account_id = mapped_column(Integer, ForeignKey('account.account_id'))
-    organization_id = mapped_column(Integer, ForeignKey('organization.organization_id'))
+    organization_id = mapped_column(Integer, ForeignKey('organization.organization_id',ondelete='CASCADE'))
