@@ -18,7 +18,11 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 ACCESS_REFRESH_TOKEN_MINUTES = int(os.getenv("ACCESS_REFRESH_TOKEN_MINUTES"))
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(
+    schemes=["bcrypt"],
+    deprecated="auto",
+    bcrypt__rounds=12  # Increase the number of rounds to make it more secure
+)
 
 @Injectable
 class AccountService:

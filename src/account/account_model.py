@@ -20,11 +20,11 @@ class AccountCreate(BaseModel):
                 raise ValueError('Username must be at least 6 characters long')
             if len(self.username) > 64:
                 raise ValueError('Username must be at most 32 characters long')
-            if not re.match("^[a-zA-Z0-9_]*$", self.username):
+            if not re.match("^\w*$", self.username):
                 raise ValueError('Username can only contain alphanumeric characters and underscores')
-            if re.search(r"([_]{2,})", self.username):
+            if re.search(r"(__{2,})", self.username):
                 raise ValueError('Username cannot contain consecutive underscores')
-            if re.search(r"([0-9]{3,})", self.username):
+            if re.search(r"\d{3,}", self.username):
                 raise ValueError('Username cannot contain consecutive numbers')
         else:
             raise ValueError('Username is required')
@@ -33,7 +33,7 @@ class AccountCreate(BaseModel):
 class Account(BaseModel):
     account_id: int
     username: str 
-    email: EmailStr = Field(exclude=True)
+    email: Optional[EmailStr] 
     role: str = "user"
     class Config:
         orm_mode = True
@@ -61,3 +61,9 @@ class Token(BaseModel):
 
 class AccountUpdateStatus(BaseModel):
     is_active: bool
+
+class AccountResponseModelWithPaginations(BaseModel):
+    items: list[AccountsResponse]
+    previous: int
+    next: int
+    total: int
