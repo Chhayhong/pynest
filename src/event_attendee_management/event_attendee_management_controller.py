@@ -16,10 +16,10 @@ class EventAttendeeManagementController:
     def __init__(self, event_attendee_management_service: EventAttendeeManagementService):
         self.event_attendee_management_service = event_attendee_management_service
 
-    @Get("/")
+    @Get("/participated/{limit=100}/{offset=0}")
     @handle_status_code_500_exceptions
-    async def get_my_participated_event(self,session: AsyncSession = Depends(config.get_db),current_account_id: int = Depends(get_current_account)):
-        return await self.event_attendee_management_service.get_my_participated_event(current_account_id,session)
+    async def get_my_participated_event(self,limit:int=100,offset:int=0,session: AsyncSession = Depends(config.get_db),current_account_id: int = Depends(get_current_account)):
+        return await self.event_attendee_management_service.get_my_participated_event(current_account_id,session,limit,offset)
 
     @Post("/register/{event_id}")
     @handle_status_code_500_exceptions
@@ -32,8 +32,8 @@ class EventAttendeeManagementController:
         result = await self.event_attendee_management_service.add_event_attendee_management(event_id, current_account_id, event_attendee_register, session)
         return result
     
-    @Get("/managed_list")
+    @Get("/managed_participant_list/{limit=100}/{offset=0}")
     @handle_status_code_500_exceptions
-    async def get_managed_event_attendee_list(self, session: AsyncSession = Depends(config.get_db),current_account_id: int = Depends(get_current_account)):
-        return await self.event_attendee_management_service.get_managed_event_attendee_list(current_account_id,session)
+    async def get_managed_participant_attendee_list(self, limit: int=100, offset: int=0, session: AsyncSession = Depends(config.get_db),current_account_id: int = Depends(get_current_account)):
+        return await self.event_attendee_management_service.get_managed_event_attendee_list(current_account_id,session,limit,offset)
  

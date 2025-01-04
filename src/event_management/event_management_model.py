@@ -29,6 +29,7 @@ class EventManagementCreate(BaseModel):
         return self
 
 class EventManagementBaseModel(BaseModel):   
+    event_id: int
     name: str
     description: str
     start_time: datetime 
@@ -45,7 +46,7 @@ class EventManagementBaseModel(BaseModel):
     event_language: str
     created_at: datetime
     updated_at: datetime
-    privacy: str = Field(..., pattern="^(Public|Private)$")
+    privacy: str 
     organization: OrganizationResponse
     
 
