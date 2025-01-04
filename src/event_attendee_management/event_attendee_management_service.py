@@ -1,5 +1,4 @@
-import time
-
+from fastapi import HTTPException
 from ..event_management.event_management_entity import EventManagement as EventManagementEntity
 from ..organization.organization_entity import AccountOrganization as AccountOrganizationEntity
 from .event_attendee_management_model import AttendeeRegister
@@ -15,19 +14,42 @@ class EventAttendeeManagementService:
 
     @async_db_request_handler
     async def add_event_attendee_management(self, event_id:int,account_id:int, event_attendee_register: AttendeeRegister, session: AsyncSession):
-        async with session.begin():
-            new_event_attendee = AttendeeEntity(
-            **event_attendee_register.model_dump()
-            )
-            session.add(new_event_attendee)
-            await session.flush()
+        try:
+            async with session.begin():
+                new_event_attendee = AttendeeEntity(
+                    **event_attendee_register.model_dump()
+                )
+                session.add(new_event_attendee)
+                await session.flush()
 
-            add_attendee_list = EventAttendeeListEntity(
-            event_id=event_id, attendee_id=new_event_attendee.attendee_id, account_id=account_id
+                add_attendee_list = EventAttendeeListEntity(
+                    event_id=event_id, attendee_id=new_event_attendee.attendee_id, account_id=account_id
+                )
+                session.add(add_attendee_list)
+                await session.commit()
+                return new_event_attendee.attendee_id
+        except Exception as e:
+            await session.rollback()
+            raise HTTPException(status_code=500, detail=str(e))
+       
+    @async_db_request_handler
+    async def check_attendee_already_joined_event(self,account_id:int, event_id: int, session: AsyncSession):
+        event_query = select(EventManagementEntity).where(EventManagementEntity.event_id == event_id)
+        event_result = await session.execute(event_query)
+        event = event_result.scalars().first()
+
+        if not event:
+            return "Event not found"
+        existing_attendee_query = select(EventAttendeeListEntity).where(
+                EventAttendeeListEntity.event_id == event_id,
+                EventAttendeeListEntity.account_id == account_id
             )
-            session.add(add_attendee_list)
-        await session.commit()
-        return new_event_attendee.attendee_id
+        existing_attendee_result = await session.execute(existing_attendee_query)
+        existing_attendee = existing_attendee_result.scalars().first()
+
+        if existing_attendee:
+            return "Account joined this event"
+        return True
 
     @async_db_request_handler
     async def get_managed_event_attendee_list(self, account_id: int, session: AsyncSession):
