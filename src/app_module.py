@@ -14,6 +14,7 @@ import os
 from src.event_attendee_management.event_attendee_management_module import (
     EventAttendeeManagementModule,
 )
+from src.event_organizer.event_organizer_module import EventOrganizerModule
 
 
 @Module(
@@ -22,6 +23,7 @@ from src.event_attendee_management.event_attendee_management_module import (
         OrganizationModule,
         EventManagementModule,
         EventAttendeeManagementModule,
+        EventOrganizerModule,
     ],
     controllers=[AppController],
     providers=[AppService],

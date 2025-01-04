@@ -3,6 +3,8 @@ from fastapi import HTTPException
 from nest.core import Controller, Get, Post, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..annotation.max_limit_query import max_limit_query
+
 from ..annotation.http_status_code_500_exception import handle_status_code_500_exceptions
 from ..authorization_utils import get_current_account
 from src.config import config
@@ -21,6 +23,7 @@ class EventManagementController:
 
     @Get("/{limit=100}/{offset=0}",response_model=EventManagementResponse)
     @handle_status_code_500_exceptions
+    @max_limit_query()
     async def get_events_management(self,limit: Optional[int] = 100, offset: Optional[int] = 0, session: AsyncSession = Depends(config.get_db),current_account_id: int = Depends(get_current_account)):
         return await self.event_management_service.get_events_management(current_account_id,session,limit,offset)
 
@@ -34,6 +37,7 @@ class EventManagementController:
     
     @Get("/event/public")
     @handle_status_code_500_exceptions
+    @max_limit_query()
     async def get_public_events(self,limit: Optional[int] = 100, offset: Optional[int] = 0, session: AsyncSession = Depends(config.get_db)):
         return await self.event_management_service.get_public_events(session,limit,offset)
 

@@ -2,7 +2,7 @@ from typing import List, Optional
 from fastapi import Depends, HTTPException
 from nest.core import Controller
 from nest.core import Controller, Get, Depends, Post
-
+from ..annotation.max_limit_query import max_limit_query
 from ..annotation.http_status_code_500_exception import handle_status_code_500_exceptions
 from .admin_account_service import AdminAccountService
 from .account_model import AccountResponseModelWithPaginations, AccountUpdateStatus, AccountsResponse
@@ -17,6 +17,7 @@ class AdminAccountController:
 
     @Get("/{limit=100}/{offset=0}", response_model=AccountResponseModelWithPaginations)
     @handle_status_code_500_exceptions
+    @max_limit_query()
     async def get_accounts(self,limit: Optional[int] = 100, offset: Optional[int] = 0, session: AsyncSession = Depends(config.get_db),current_account_id: int = Depends(get_current_account)):
         authorized_account:AccountsResponse = await self.admin_account_service.get_account(current_account_id, session)
         if authorized_account.role != "admin":
