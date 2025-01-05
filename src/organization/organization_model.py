@@ -8,13 +8,7 @@ class OrganizationCreate(BaseModel):
     description: str
     address: str
     phone: str
-    privacy: str
-
-    @model_validator(mode='after')
-    def check_privacy(self) -> Self:
-        if self.privacy and self.privacy not in ['Public', 'Private']:
-            raise ValueError('Privacy must be one of public or private')
-        return self
+   
 
 class OrganizationResponse(BaseModel):
     organization_id: int
@@ -38,6 +32,12 @@ class OrganizationUpdate(BaseModel):
     address: Optional[str] = None 
     phone: Optional[str] = None 
     privacy: Optional[str] = None
+    
+    @model_validator(mode='after')
+    def check_privacy(self) -> Self:
+        if self.privacy and self.privacy not in ['Public', 'Private']:
+            raise ValueError('Privacy must be one of public or private')
+        return self
 
 class DeleteOrganization(BaseModel):
     detail: str = "Organization deleted successfully"

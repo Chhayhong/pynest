@@ -20,7 +20,7 @@ class EventAttendeeManagementController:
         self.event_attendee_management_service = event_attendee_management_service
         self.event_management_service = event_management_service
 
-    @Get("/participated/{limit=100}/{offset=0}")
+    @Get("/participated")
     @handle_status_code_500_exceptions
     @max_limit_query()
     async def get_my_participated_event(self,limit:int=100,offset:int=0,session: AsyncSession = Depends(config.get_db),current_account_id: int = Depends(get_current_account)):

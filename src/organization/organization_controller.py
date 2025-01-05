@@ -18,7 +18,7 @@ class OrganizationController:
     def __init__(self, organization_service: OrganizationService):
         self.organization_service = organization_service
 
-    @Get("/organizations/{limit=100}/{offset=0}", response_model=OrganizationPaginations)
+    @Get("/organizations", response_model=OrganizationPaginations)
     @handle_status_code_500_exceptions
     async def get_owned_organizations(self,limit: Optional[int] = 100, offset: Optional[int] = 0, session: AsyncSession = Depends(config.get_db), current_account_id: int = Depends(get_current_account), name: Optional[str] = None):
         return await self.organization_service.get_owned_organizations(current_account_id, session,limit,offset, name)

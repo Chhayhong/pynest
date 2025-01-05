@@ -13,7 +13,7 @@ class OrganizationPublicController:
     def __init__(self, organization_service: OrganizationService):
         self.organization_service = organization_service
     
-    @Get("/{limit=100}/{offset=0}")
+    @Get("/")
     @handle_status_code_500_exceptions
     async def get_organizations(self, session: AsyncSession = Depends(config.get_db),limit:Optional[int]=100,offset:Optional[int]=0, name: Optional[str] = None):
         return await self.organization_service.get_organizations_public(session,limit,offset,name)

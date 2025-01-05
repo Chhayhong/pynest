@@ -21,7 +21,7 @@ class EventManagementController:
     def __init__(self, event_management_service: EventManagementService):
         self.event_management_service = event_management_service
 
-    @Get("/{limit=100}/{offset=0}",response_model=EventManagementResponse)
+    @Get("/",response_model=EventManagementResponse)
     @handle_status_code_500_exceptions
     @max_limit_query()
     async def get_events_management(self,limit: Optional[int] = 100, offset: Optional[int] = 0, session: AsyncSession = Depends(config.get_db),current_account_id: int = Depends(get_current_account)):

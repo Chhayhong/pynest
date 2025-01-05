@@ -17,7 +17,7 @@ class EventOwnerManageController:
     def __init__(self, event_attendee_management_service: EventAttendeeManagementService,event_management_service: EventManagementService):
         self.event_attendee_management_service = event_attendee_management_service
         self.event_management_service = event_management_service
-    @Get("/managed_participant_list/{limit=100}/{offset=0}")
+    @Get("/managed_participant_list")
     @handle_status_code_500_exceptions
     @max_limit_query()
     async def get_managed_participant_attendee_list(self, limit: int=100, offset: int=0, session: AsyncSession = Depends(config.get_db),current_account_id: int = Depends(get_current_account)):
