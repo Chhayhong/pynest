@@ -1,24 +1,42 @@
-version: "3.9"  # Use the latest stable version
+version: "3.9"
 
 services:
   web:
     image: pynest-app
-    ports:
-      - "8000:8000"
-    env_file:
-      - .env
     depends_on:
       - db
-    restart: always
-
+    networks:
+      - app-network
+    restart: unless-stopped
   db:
     image: postgres:13
-    env_file:
-      - .env
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123
+      POSTGRES_DB: eventbridgekh
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+    restart: unless-stopped
     volumes:
-      - pgdata:/var/lib/postgresql/data
-    restart: always
+      - pgdata:/var/lib/postgresql/data # Define the volume pgdata
+    networks:
+      - app-network
+  nginx:
+      image: nginx:latest
+      ports:
+        - "80:80"
+        - "443:443"
+      volumes:
+        - ./nginx.conf:/etc/nginx/nginx.conf
+        - ./certs:/etc/nginx/certs
+      depends_on:
+        - web
+      networks:
+        - app-network    
+      restart: unless-stopped
+
+networks:
+  app-network:
 
 volumes:
-  pgdata:
-    driver: local
+  pgdata: # Define the volume pgdata
