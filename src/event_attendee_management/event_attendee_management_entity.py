@@ -9,8 +9,8 @@ class Attendee(config.Base):
     __tablename__ = 'attendee'
 
     attendee_id:Mapped[int] = mapped_column(Integer, primary_key=True)
-    full_name:Mapped[str] = mapped_column(String(64))
-    email:Mapped[str] = mapped_column(String(125)) #Will send confirmation email to this email
+    full_name:Mapped[str] = mapped_column(String(64),nullable=False)
+    email:Mapped[str] = mapped_column(String(125)) #Future improvement: ill send confirmation email to this email
     phone_number = mapped_column(String(20))
     bio:Mapped[str] = mapped_column(String(255))
     remarks = mapped_column(String(255))

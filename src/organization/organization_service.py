@@ -11,21 +11,19 @@ class OrganizationService:
 
     @async_db_request_handler
     async def add_organization(self,creator_account_id:int, organization: OrganizationCreate, session: AsyncSession):
-        async with session.begin():
-            new_organization = OrganizationEntity(
+        new_organization = OrganizationEntity(
             **organization.model_dump()
-            )
-            session.add(new_organization)
-            await session.flush()  # Ensure the new organization gets an ID
-
-            account_organization = AccountOrganizationEntity(
-            account_id=creator_account_id,
-            organization_id=new_organization.organization_id
-            )
-            session.add(account_organization)
+        )
+        session.add(new_organization)
+        await session.flush()
         
+        account_organization = AccountOrganizationEntity(
+            organization_id=new_organization.organization_id,
+            account_id=creator_account_id
+        )
+        session.add(account_organization)
         await session.commit()
-        return new_organization.__dict__
+        return new_organization
 
     @async_db_request_handler
     async def get_organizations_public(self, session: AsyncSession):
@@ -54,7 +52,8 @@ class OrganizationService:
             return None
         
         for key, value in organization.model_dump().items():
-            setattr(organization_exist, key, value)
+            if value is not None:  # Only update fields that are not None
+                setattr(organization_exist, key, value)
         
         await session.commit()
         return organization_exist

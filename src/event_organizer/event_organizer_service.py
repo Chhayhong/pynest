@@ -1,4 +1,5 @@
-from .event_organizer_model import EventOrganizer
+import logging
+from .event_organizer_model import EventOrganizer, EventOrganizerUpdate
 from .event_organizer_entity import EventOrganizer as EventOrganizerEntity
 from ..event_management.event_management_entity import EventManagement as EventManagementEntity
 from ..organization.organization_entity import AccountOrganization as AccountOrganizationEntity
@@ -12,9 +13,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 class EventOrganizerService:
 
     @async_db_request_handler
-    async def add_event_organizer(self, event_id: int, account_id: int, event_organizer: EventOrganizer, session: AsyncSession):
+    async def add_event_organizer_to_owned_organization(self, event_id: int, account_id: int, event_organizer: EventOrganizer, session: AsyncSession):
         existing_organizer_query = select(EventOrganizerEntity).where(
-                EventOrganizerEntity.full_name == event_organizer.full_name,
+                EventOrganizerEntity.full_name == event_organizer.full_name
+                and
                 EventOrganizerEntity.event_id == event_id
             )
         existing_organizer_result = await session.execute(existing_organizer_query)
@@ -38,12 +40,69 @@ class EventOrganizerService:
             session.add(new_event_organizer)
             await session.commit()
             return new_event_organizer.organizer_id
-        except Exception:
+        except Exception as e:
             await session.rollback()
+            logging.error("Error creating event organizer: ", e)
+            
             
 
     @async_db_request_handler
-    async def get_event_organizer(self, session: AsyncSession):
-        query = select(EventOrganizerEntity)
+    async def get_event_organizers(self, account_id:int,session: AsyncSession):
+        query = select(EventOrganizerEntity).select_from(EventOrganizerEntity).join(EventManagementEntity, EventManagementEntity.event_id == EventOrganizerEntity.event_id).join(AccountOrganizationEntity, AccountOrganizationEntity.account_id == account_id).where(
+            AccountOrganizationEntity.organization_id == EventManagementEntity.organization_id,
+            AccountOrganizationEntity.account_id == account_id
+        )
         result = await session.execute(query)
         return result.scalars().all()
+    
+    
+    @async_db_request_handler
+    async def get_event_organizer_by_event_id(self, event_id: int, session: AsyncSession):
+        query = select(EventOrganizerEntity).where(EventOrganizerEntity.event_id == event_id)
+        result = await session.execute(query)
+        return result.scalars().all()
+    
+    @async_db_request_handler
+    async def update_event_organizer(self, event_id: int, organizer_id: int, event_organizer: EventOrganizerUpdate, session: AsyncSession):
+        query = select(EventOrganizerEntity).where(
+            EventOrganizerEntity.event_id == event_id,
+            EventOrganizerEntity.organizer_id == organizer_id
+        )
+        result = await session.execute(query)
+        organizer = result.scalars().first()
+        if not organizer:
+            return False
+        
+        for key, value in event_organizer.model_dump().items():
+            if value is not None:
+                setattr(organizer, key, value)
+        
+        session.add(organizer)
+        await session.commit()
+        return organizer.organizer_id
+    
+    @async_db_request_handler
+    async def check_account_owned_event(self, event_id: int, account_id: int, session: AsyncSession):
+        query = select(EventManagementEntity, AccountOrganizationEntity).join(
+            AccountOrganizationEntity, AccountOrganizationEntity.organization_id == EventManagementEntity.organization_id
+        ).where(
+            EventManagementEntity.event_id == event_id,
+            AccountOrganizationEntity.account_id == account_id
+        )
+        result = await session.execute(query)
+        event = result.scalars().first()
+        if not event:
+            return False
+        return True
+    
+    @async_db_request_handler
+    async def search_event_organizers_by_name(self, event_id: int, full_name: str, session: AsyncSession):
+        query = select(EventOrganizerEntity).where(
+            EventOrganizerEntity.event_id == event_id
+            and
+            EventOrganizerEntity.full_name == full_name
+        )
+        result = await session.execute(query)
+        return result.scalars().first()
+
+

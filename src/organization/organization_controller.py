@@ -1,6 +1,6 @@
-from typing import List
+from typing import List, Optional
 from fastapi import HTTPException
-from nest.core import Controller, Get, Post, Depends
+from nest.core import Controller, Get, Post, Depends,Patch
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..annotation.http_status_code_500_exception import handle_status_code_500_exceptions
@@ -20,8 +20,8 @@ class OrganizationController:
 
     @Get("/organizations", response_model=List[OrganizationResponse])
     @handle_status_code_500_exceptions
-    async def get_organization(self, session: AsyncSession = Depends(config.get_db),current_account_id: int = Depends(get_current_account)):
-        return await self.organization_service.get_organizations_by_account_id(current_account_id,session)
+    async def get_organization(self, session: AsyncSession = Depends(config.get_db), current_account_id: int = Depends(get_current_account), name: Optional[str] = None):
+        return await self.organization_service.get_organizations_by_account_id(current_account_id, session,name)
 
     @Post("/register", response_model=OrganizationCreate)
     @handle_status_code_500_exceptions
@@ -32,7 +32,7 @@ class OrganizationController:
         return await self.organization_service.add_organization(current_account_id,organization, session)
     
     
-    @Post("/update", response_model=OrganizationUpdate)
+    @Patch("/update", response_model=OrganizationUpdate)
     @handle_status_code_500_exceptions
     async def update_organization(self, organization_id:str, organization: OrganizationUpdate, session:AsyncSession=Depends(config.get_db),current_account_id: int = Depends(get_current_account)):
         result = await self.organization_service.update_organization(organization_id,current_account_id, organization, session)
@@ -53,19 +53,11 @@ class OrganizationController:
         
         return {"detail": "Organization deleted successfully"}
     
-    @Get("/search/{name}")
-    @handle_status_code_500_exceptions
-    async def search_organization(self, name: str, session: AsyncSession = Depends(config.get_db),current_account_id: int = Depends(get_current_account)):
-        return await self.organization_service.search_organization_by_account_id(current_account_id,name, session)
- 
-    @Get("/search/public/{name}")
-    @handle_status_code_500_exceptions
-    async def search_organization_public(self, name: str, session: AsyncSession = Depends(config.get_db)):
-        return await self.organization_service.search_organization(name, session)
-    
     @Get("/organization/public")
     @handle_status_code_500_exceptions
-    async def get_organization_public(self, session: AsyncSession = Depends(config.get_db)):
+    async def get_organization_public(self, session: AsyncSession = Depends(config.get_db), name: str = None):
+        if name:
+            return await self.organization_service.search_organization(name, session)
         return await self.organization_service.get_organizations_public(session)
     
     

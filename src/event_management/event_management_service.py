@@ -1,4 +1,4 @@
-from .event_management_model import EventManagementCreate
+from .event_management_model import EventManagementCreate, EventManagementUpdate
 from .event_management_entity import EventManagement as EventManagementEntity
 from ..organization.organization_entity import Organization as OrganizationEntity, AccountOrganization as AccountOrganizationEntity
 from nest.core.decorators.database import async_db_request_handler
@@ -103,4 +103,38 @@ class EventManagementService:
             "next": int(next_offset or 0),
             "total": int(total or 0)
         }
+    
+    @async_db_request_handler
+    async def update_event_management(self, event_id: int, event_management: EventManagementUpdate, session: AsyncSession):
+        query = select(EventManagementEntity).where(EventManagementEntity.event_id == event_id)
+        result = await session.execute(query)
+        event = result.scalars().first()
+        if not event:
+            return False
+        
+        for key, value in event_management.model_dump().items():
+            if value is not None:
+                if key in ['start_time', 'end_time'] and value.tzinfo is not None:
+                    value = value.replace(tzinfo=None)
+                setattr(event, key, value)
+        
+        session.add(event)
+        await session.commit()
+        return event.event_id
+    
+    @async_db_request_handler
+    async def get_event_account_owner(self,event_id:int,account_id:int,session:AsyncSession):
+        query = select(
+            EventManagementEntity.organization_id
+        ).select_from(
+            EventManagementEntity
+        ).join(
+            AccountOrganizationEntity,
+            EventManagementEntity.organization_id == AccountOrganizationEntity.organization_id
+        ).where(
+            EventManagementEntity.event_id == event_id,
+            AccountOrganizationEntity.account_id == account_id
+        )
+        result = await session.execute(query)
+        return result.scalars().first()
     

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 from pydantic import BaseModel
 
 class OrganizationCreate(BaseModel):
@@ -19,11 +20,11 @@ class OrganizationResponse(BaseModel):
     updated_at: datetime = datetime.now()
 
 class OrganizationUpdate(BaseModel):
-    name: str 
-    description: str 
-    address: str 
-    phone: str 
-    privacy: str
+    name: Optional[str] = None 
+    description: Optional[str] = None 
+    address: Optional[str] = None 
+    phone: Optional[str] = None 
+    privacy: Optional[str] = None
 
 class DeleteOrganization(BaseModel):
     detail: str = "Organization deleted successfully"
