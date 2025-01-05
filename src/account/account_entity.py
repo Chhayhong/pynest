@@ -12,6 +12,6 @@ class Account(config.Base):
     password = mapped_column(String(255), nullable=False)
     role = mapped_column(String(64), default="user")
     refresh_token = mapped_column(String)
-    is_active = mapped_column(Boolean, default=False)
+    is_active = mapped_column(Boolean, default=True)
 
 

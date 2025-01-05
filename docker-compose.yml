@@ -2,6 +2,9 @@ version: "3.9"
 
 services:
   web:
+    build: .
+    volumes:
+      - .:/app
     image: pynest-app
     depends_on:
       - db

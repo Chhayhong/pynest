@@ -19,8 +19,8 @@ RUN pip install pip==21
 COPY . /app
 
 # Install Python dependencies
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
-RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/ssl/private/nginx-selfsigned.key -out /etc/ssl/certs/nginx-selfsigned.crt
 # Define the command to run the application
+# CMD ["uvicorn", "src.app_module:http_server", "--host", "0.0.0.0", "--port", "8000","--workers", "4"]
 CMD ["uvicorn", "src.app_module:http_server", "--host", "0.0.0.0", "--port", "8000"]
