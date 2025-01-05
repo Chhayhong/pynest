@@ -1,5 +1,7 @@
 from fastapi import HTTPException
 from sqlalchemy.orm._orm_constructors import aliased
+
+from ..utils import calculate_offsets
 from ..event_management.event_management_entity import EventManagement as EventManagementEntity
 from ..organization.organization_entity import AccountOrganization as AccountOrganizationEntity
 from .event_attendee_management_model import AttendeeRegister, AttendeeUpdate
@@ -103,9 +105,7 @@ class EventAttendeeManagementService:
         total_query = select(func.count()).select_from(total_subquery)
         total_result = await session.execute(total_query)
         total = total_result.scalar()
-
-        previous_offset = offset - limit if offset - limit >= 0 else None
-        next_offset = offset + limit if offset + limit < total else None
+        next_offset, previous_offset = calculate_offsets(offset, limit, total)
 
         return {
             "items": attendees_by_event,
@@ -128,14 +128,12 @@ class EventAttendeeManagementService:
         )
         total_result = await session.execute(total_query)
         total = total_result.scalar()
-
-        previous_offset = offset - limit if offset - limit >= 0 else None
-        next_offset = offset + limit if offset + limit < total else None
+        next_offset, previous_offset = calculate_offsets(offset, limit, total)
 
         return {
             "items": result.scalars().all(),
-            "previous": int(previous_offset or 0),
-            "next": int(next_offset or 0),
+            "previous": previous_offset,
+            "next": next_offset,
             "total": int(total or 0)
         }
 

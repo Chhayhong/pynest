@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import HTTPException
 from nest.core import Controller, Get, Post, Depends,Patch
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,8 +17,8 @@ class EventOrganizerController:
         self.event_organizer_service = event_organizer_service
 
     @Get("/")
-    async def get_event_managed_organizers(self, session: AsyncSession = Depends(config.get_db), current_account_id: int = Depends(get_current_account), full_name: str = None):
-        return await self.event_organizer_service.get_event_organizers(current_account_id, session,full_name)
+    async def get_event_managed_organizers(self, limit:Optional[int]=100,offset:Optional[int]=0, session: AsyncSession = Depends(config.get_db), current_account_id: int = Depends(get_current_account), full_name: str = None):
+        return await self.event_organizer_service.get_event_organizers(current_account_id, session,limit,offset,full_name)
 
     @Post("/{event_id}")
     async def add_event_organizer(self, event_id:int,event_organizer: EventOrganizer, session: AsyncSession = Depends(config.get_db),current_account_id: int = Depends(get_current_account)):

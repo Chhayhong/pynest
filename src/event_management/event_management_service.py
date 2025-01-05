@@ -1,4 +1,6 @@
 from typing import Optional
+
+from ..utils import calculate_offsets
 from .event_management_model import EventManagementCreate, EventManagementUpdate
 from .event_management_entity import EventManagement as EventManagementEntity
 from ..organization.organization_entity import Organization as OrganizationEntity, AccountOrganization as AccountOrganizationEntity
@@ -24,7 +26,25 @@ class EventManagementService:
         return new_event_management.event_id
 
     @async_db_request_handler
-    async def get_events_management(self, account_id: int, session: AsyncSession, limit: int = 100, offset: int = 0):
+    async def get_events_managements(self, account_id: int, session: AsyncSession, limit: int = 100, offset: int = 0, name: Optional[str] = None):
+        query = self._build_event_management_query(account_id, limit, offset, name)
+        result = await session.execute(query)
+        event_managements = self._process_event_management_results(result)
+
+        total_query = self._build_total_query(account_id, name)
+        total_result = await session.execute(total_query)
+        total = total_result.scalar_one()
+
+        next_offset, previous_offset = calculate_offsets(offset, limit, total)
+
+        return {
+            "items": event_managements,
+            "previous": int(previous_offset or 0),
+            "next": int(next_offset or 0),
+            "total": int(total or 0)
+        }
+
+    def _build_event_management_query(self, account_id: int, limit: int, offset: int, name: Optional[str]):
         query = select(
             EventManagementEntity,
             OrganizationEntity
@@ -36,14 +56,19 @@ class EventManagementService:
             EventManagementEntity.organization_id == OrganizationEntity.organization_id,
             AccountOrganizationEntity.account_id == account_id
         ).limit(limit).offset(offset)
-        
-        result = await session.execute(query)
+        if name:
+            query = query.where(EventManagementEntity.name.ilike(f"%{name}%"))
+        return query
+
+    def _process_event_management_results(self, result):
         event_managements = []
         for event_management, organization in result.all():
             event_management_dict = event_management.__dict__
             event_management_dict['organization'] = organization.__dict__
             event_managements.append(event_management_dict)
-        
+        return event_managements
+
+    def _build_total_query(self, account_id: int, name: Optional[str]):
         total_query = select(
             func.count(EventManagementEntity.event_id)
         ).select_from(
@@ -56,19 +81,9 @@ class EventManagementService:
             EventManagementEntity.organization_id == OrganizationEntity.organization_id,
             AccountOrganizationEntity.account_id == account_id
         )
-        
-        total_result = await session.execute(total_query)
-        total = total_result.scalar_one()
-
-        next_offset = (int(offset or 0) + int(limit or 0)) if (int(offset or 0) + int(limit or 0)) < int(total) else None
-        previous_offset = (int(offset or 0) - int(limit or 0)) if (int(offset or 0) - int(limit or 0)) >= 0 else None
-
-        return {
-            "items": event_managements,
-            "previous": int(previous_offset or 0),
-            "next": int(next_offset or 0),
-            "total": int(total or 0)
-        }
+        if name:
+            total_query = total_query.where(EventManagementEntity.name.ilike(f"%{name}%"))
+        return total_query
     
     @async_db_request_handler
     async def get_organization_account_owner(self,organization_id:int,account_id:int,session:AsyncSession):
@@ -99,9 +114,7 @@ class EventManagementService:
             total_query = total_query.where(EventManagementEntity.name.ilike(f"%{name}%"))
         total_result = await session.execute(total_query)
         total = total_result.scalar_one()
-
-        next_offset = (int(offset or 0) + int(limit or 0)) if (int(offset or 0) + int(limit or 0)) < int(total) else None
-        previous_offset = (int(offset or 0) - int(limit or 0)) if (int(offset or 0) - int(limit or 0)) >= 0 else None
+        next_offset, previous_offset = calculate_offsets(offset, limit, total)
 
         return {
             "items": [event_management.__dict__ for event_management in event_managements],

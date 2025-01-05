@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..annotation.max_limit_query import max_limit_query
 from ..annotation.http_status_code_500_exception import handle_status_code_500_exceptions
-from src.authorization_utils import get_current_account,Not_Authorized_Message
+from src.authorization_utils import get_current_account
 from src.config import config
 
 

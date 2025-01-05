@@ -3,6 +3,8 @@ from nest.core import Injectable
 from sqlalchemy.ext.asyncio import AsyncSession
 from nest.core.decorators.database import async_db_request_handler
 
+from ..utils import calculate_offsets
+
 from .account_model import AccountUpdateStatus
 from .account_entity import Account as AccountEntity
 from sqlalchemy import func, select
@@ -23,8 +25,7 @@ class AdminAccountService:
         accounts = result.scalars().all()
         total = await session.execute(select(func.count()).select_from(AccountEntity))
         total = total.scalar()
-        previous_offset = offset - limit if offset - limit >= 0 else None
-        next_offset = offset + limit if offset + limit < total else None
+        next_offset, previous_offset = calculate_offsets(offset, limit, total)
 
         return {
             "items": accounts,

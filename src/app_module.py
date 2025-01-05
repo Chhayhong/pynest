@@ -34,7 +34,7 @@ class AppModule:
 
 app = PyNestFactory.create(
     AppModule,
-    description="Where everyone connected - build with pynest python framework",
+    description="Where everyone connected 🤝",
     title="EventBridgeKH",
     version="1.0.0",
     debug=True,

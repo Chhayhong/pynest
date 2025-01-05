@@ -1,13 +1,11 @@
-from typing import List, Optional
+from typing import Optional
 from fastapi import HTTPException
 from nest.core import Controller, Get, Post, Depends,Patch
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from ..annotation.max_limit_query import max_limit_query
 from ..annotation.http_status_code_500_exception import handle_status_code_500_exceptions
 from ..authorization_utils import get_current_account
 from src.config import config
-
-
 from .organization_service import OrganizationService
 from .organization_model import DeleteOrganization, OrganizationCreate, OrganizationPaginations, OrganizationUpdate
 
@@ -20,6 +18,7 @@ class OrganizationController:
 
     @Get("/organizations", response_model=OrganizationPaginations)
     @handle_status_code_500_exceptions
+    @max_limit_query()
     async def get_owned_organizations(self,limit: Optional[int] = 100, offset: Optional[int] = 0, session: AsyncSession = Depends(config.get_db), current_account_id: int = Depends(get_current_account), name: Optional[str] = None):
         return await self.organization_service.get_owned_organizations(current_account_id, session,limit,offset, name)
     

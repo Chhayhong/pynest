@@ -7,7 +7,7 @@ from ..organization.organization_entity import AccountOrganization as AccountOrg
 from nest.core.decorators.database import async_db_request_handler
 from nest.core import Injectable
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 @Injectable
@@ -48,15 +48,37 @@ class EventOrganizerService:
             
 
     @async_db_request_handler
-    async def get_event_organizers(self, account_id:int,session: AsyncSession,full_name:Optional[str] = None):
+    async def get_event_organizers(self, account_id: int, session: AsyncSession, limit: Optional[int] = 100, offset: Optional[int] = 0, full_name: Optional[str] = None):
         query = select(EventOrganizerEntity).select_from(EventOrganizerEntity).join(EventManagementEntity, EventManagementEntity.event_id == EventOrganizerEntity.event_id).join(AccountOrganizationEntity, AccountOrganizationEntity.account_id == account_id).where(
             AccountOrganizationEntity.organization_id == EventManagementEntity.organization_id,
             AccountOrganizationEntity.account_id == account_id
         )
         if full_name:
             query = query.where(EventOrganizerEntity.full_name.ilike(f"%{full_name}%"))
+        
+        query = query.limit(limit).offset(offset)
+        
+        total_query = select(func.count(EventOrganizerEntity.organizer_id)).select_from(EventOrganizerEntity).join(
+            EventManagementEntity, EventManagementEntity.event_id == EventOrganizerEntity.event_id).join(
+            AccountOrganizationEntity, AccountOrganizationEntity.account_id == account_id).where(
+            AccountOrganizationEntity.organization_id == EventManagementEntity.organization_id,
+            AccountOrganizationEntity.account_id == account_id
+        )
+        if full_name:
+            total_query = total_query.where(EventOrganizerEntity.full_name.ilike(f"%{full_name}%"))
+        
+        total_result = await session.execute(total_query)
+        total = total_result.scalar()
+        
         result = await session.execute(query)
-        return result.scalars().all()
+        items = result.scalars().all()
+        
+        return {
+            "items": items,
+            "previous": offset | 0,
+            "next": offset | 0 + limit | 0 if offset | 0 + limit | 0 < total else 0,
+            "total": total
+        }
     
     
     @async_db_request_handler

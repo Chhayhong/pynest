@@ -1,4 +1,6 @@
 from typing import Optional
+
+from ..utils import calculate_offsets
 from .organization_model import OrganizationCreate, OrganizationUpdate
 from .organization_entity import Organization as OrganizationEntity, AccountOrganization as AccountOrganizationEntity
 from nest.core.decorators.database import async_db_request_handler
@@ -40,11 +42,12 @@ class OrganizationService:
             total_query = total_query.where(OrganizationEntity.name.ilike(f'%{name}%'))
         total_result = await session.execute(total_query)
         total = total_result.scalar()
+        next_offset, previous_offset = calculate_offsets(offset, limit, total)
 
         return {
             "items": organizations,
-            "previous": max(0, offset | 0 - limit | 0),
-            "next": offset | 0 + limit | 0 if offset | 0 + limit | 0 < total else 0,
+            "previous": previous_offset,
+            "next": next_offset,
             "total": total
         }
     
@@ -62,11 +65,12 @@ class OrganizationService:
             total_query = total_query.where(OrganizationEntity.name.ilike(f'%{name}%'))
         total_result = await session.execute(total_query)
         total = total_result.scalar()
+        next_offset, previous_offset = calculate_offsets(offset, limit, total)
 
         return {
             "items": organizations,
-            "previous": max(0, offset or 0 - limit | 0),
-            "next": offset | 0 + limit | 0 if offset | 0 + limit | 0 < total else 0,
+            "previous": previous_offset,
+            "next": next_offset,
             "total": total
         }
     

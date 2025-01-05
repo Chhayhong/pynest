@@ -24,8 +24,8 @@ class EventManagementController:
     @Get("/",response_model=EventManagementResponse)
     @handle_status_code_500_exceptions
     @max_limit_query()
-    async def get_events_management(self,limit: Optional[int] = 100, offset: Optional[int] = 0, session: AsyncSession = Depends(config.get_db),current_account_id: int = Depends(get_current_account)):
-        return await self.event_management_service.get_events_management(current_account_id,session,limit,offset)
+    async def get_events_managements(self,limit: Optional[int] = 100, offset: Optional[int] = 0, session: AsyncSession = Depends(config.get_db),current_account_id: int = Depends(get_current_account),name:Optional[str] = None):
+        return await self.event_management_service.get_events_managements(current_account_id,session,limit,offset,name)
 
     @Post("/{organization_id}/")
     @handle_status_code_500_exceptions
