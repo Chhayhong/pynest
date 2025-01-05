@@ -17,9 +17,7 @@ class EventOrganizerController:
 
     @Get("/")
     async def get_event_managed_organizers(self, session: AsyncSession = Depends(config.get_db), current_account_id: int = Depends(get_current_account), full_name: str = None):
-        if full_name:
-            return await self.event_organizer_service.search_event_organizers_by_name(current_account_id, full_name, session)
-        return await self.event_organizer_service.get_event_organizers(current_account_id, session)
+        return await self.event_organizer_service.get_event_organizers(current_account_id, session,full_name)
 
     @Post("/{event_id}")
     async def add_event_organizer(self, event_id:int,event_organizer: EventOrganizer, session: AsyncSession = Depends(config.get_db),current_account_id: int = Depends(get_current_account)):

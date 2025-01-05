@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 from .event_organizer_model import EventOrganizer, EventOrganizerUpdate
 from .event_organizer_entity import EventOrganizer as EventOrganizerEntity
 from ..event_management.event_management_entity import EventManagement as EventManagementEntity
@@ -47,11 +48,13 @@ class EventOrganizerService:
             
 
     @async_db_request_handler
-    async def get_event_organizers(self, account_id:int,session: AsyncSession):
+    async def get_event_organizers(self, account_id:int,session: AsyncSession,full_name:Optional[str] = None):
         query = select(EventOrganizerEntity).select_from(EventOrganizerEntity).join(EventManagementEntity, EventManagementEntity.event_id == EventOrganizerEntity.event_id).join(AccountOrganizationEntity, AccountOrganizationEntity.account_id == account_id).where(
             AccountOrganizationEntity.organization_id == EventManagementEntity.organization_id,
             AccountOrganizationEntity.account_id == account_id
         )
+        if full_name:
+            query = query.where(EventOrganizerEntity.full_name.ilike(f"%{full_name}%"))
         result = await session.execute(query)
         return result.scalars().all()
     
@@ -94,15 +97,5 @@ class EventOrganizerService:
         if not event:
             return False
         return True
-    
-    @async_db_request_handler
-    async def search_event_organizers_by_name(self, event_id: int, full_name: str, session: AsyncSession):
-        query = select(EventOrganizerEntity).where(
-            EventOrganizerEntity.event_id == event_id
-            and
-            EventOrganizerEntity.full_name == full_name
-        )
-        result = await session.execute(query)
-        return result.scalars().first()
 
 

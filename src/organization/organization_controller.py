@@ -9,7 +9,7 @@ from src.config import config
 
 
 from .organization_service import OrganizationService
-from .organization_model import DeleteOrganization, OrganizationCreate, OrganizationResponse, OrganizationUpdate
+from .organization_model import DeleteOrganization, OrganizationCreate, OrganizationPaginations, OrganizationUpdate
 
 
 @Controller("v1/organization", tag="Organization management")
@@ -18,15 +18,17 @@ class OrganizationController:
     def __init__(self, organization_service: OrganizationService):
         self.organization_service = organization_service
 
-    @Get("/organizations", response_model=List[OrganizationResponse])
+    @Get("/organizations/{limit=100}/{offset=0}", response_model=OrganizationPaginations)
     @handle_status_code_500_exceptions
-    async def get_organization(self, session: AsyncSession = Depends(config.get_db), current_account_id: int = Depends(get_current_account), name: Optional[str] = None):
-        return await self.organization_service.get_organizations_by_account_id(current_account_id, session,name)
+    async def get_owned_organizations(self,limit: Optional[int] = 100, offset: Optional[int] = 0, session: AsyncSession = Depends(config.get_db), current_account_id: int = Depends(get_current_account), name: Optional[str] = None):
+        return await self.organization_service.get_owned_organizations(current_account_id, session,limit,offset, name)
+    
+    # @Get("/{organization_id}")
 
     @Post("/register", response_model=OrganizationCreate)
     @handle_status_code_500_exceptions
     async def add_organization(self, organization: OrganizationCreate, session: AsyncSession = Depends(config.get_db),current_account_id: int = Depends(get_current_account)):
-        existing_organization = await self.organization_service.get_organization_by_name(organization.name, session)
+        existing_organization = await self.organization_service.get_exist_organization_by_name(organization.name, session)
         if existing_organization:
             raise HTTPException(status_code=409, detail="Organization with the same name already exists")
         return await self.organization_service.add_organization(current_account_id,organization, session)
@@ -52,12 +54,5 @@ class OrganizationController:
             raise HTTPException(status_code=500, detail="Failed to delete organization")
         
         return {"detail": "Organization deleted successfully"}
-    
-    @Get("/organization/public")
-    @handle_status_code_500_exceptions
-    async def get_organization_public(self, session: AsyncSession = Depends(config.get_db), name: str = None):
-        if name:
-            return await self.organization_service.search_organization(name, session)
-        return await self.organization_service.get_organizations_public(session)
-    
+
     

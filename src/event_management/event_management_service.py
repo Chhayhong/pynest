@@ -1,3 +1,4 @@
+from typing import Optional
 from .event_management_model import EventManagementCreate, EventManagementUpdate
 from .event_management_entity import EventManagement as EventManagementEntity
 from ..organization.organization_entity import Organization as OrganizationEntity, AccountOrganization as AccountOrganizationEntity
@@ -81,16 +82,21 @@ class EventManagementService:
         return result.scalars().first()
     
     @async_db_request_handler
-    async def get_public_events(self, session: AsyncSession, limit: int = 100, offset: int = 0):
+    async def get_public_events(self, session: AsyncSession, limit: int = 100, offset: int = 0,name:Optional[str] = None):
         query = select(EventManagementEntity).where(
             EventManagementEntity.privacy == "Public"
-        ).limit(limit).offset(offset)
+        )
+        if name:
+            query = query.where(EventManagementEntity.name.ilike(f"%{name}%"))
+        query.limit(limit).offset(offset)
         result = await session.execute(query)
         event_managements = result.scalars().all()
         
         total_query = select(func.count(EventManagementEntity.event_id)).where(
             EventManagementEntity.privacy == "Public"
         )
+        if name:
+            total_query = total_query.where(EventManagementEntity.name.ilike(f"%{name}%"))
         total_result = await session.execute(total_query)
         total = total_result.scalar_one()
 

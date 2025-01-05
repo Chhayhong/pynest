@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
+from typing_extensions import Self
 
 class OrganizationCreate(BaseModel):
     name: str
@@ -8,6 +9,12 @@ class OrganizationCreate(BaseModel):
     address: str
     phone: str
     privacy: str
+
+    @model_validator(mode='after')
+    def check_privacy(self) -> Self:
+        if self.privacy and self.privacy not in ['Public', 'Private']:
+            raise ValueError('Privacy must be one of public or private')
+        return self
 
 class OrganizationResponse(BaseModel):
     organization_id: int
@@ -18,6 +25,12 @@ class OrganizationResponse(BaseModel):
     privacy:str
     created_at: datetime = datetime.now()
     updated_at: datetime = datetime.now()
+
+class OrganizationPaginations(BaseModel):
+    items: list[OrganizationResponse]
+    previous: int
+    next: int
+    total: int
 
 class OrganizationUpdate(BaseModel):
     name: Optional[str] = None 
