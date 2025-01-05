@@ -1,9 +1,12 @@
+from typing import Optional
+
+from ..utils import calculate_offsets
 from .organization_model import OrganizationCreate, OrganizationUpdate
 from .organization_entity import Organization as OrganizationEntity, AccountOrganization as AccountOrganizationEntity
 from nest.core.decorators.database import async_db_request_handler
 from nest.core import Injectable
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 @Injectable
@@ -11,33 +14,65 @@ class OrganizationService:
 
     @async_db_request_handler
     async def add_organization(self,creator_account_id:int, organization: OrganizationCreate, session: AsyncSession):
-        async with session.begin():
-            new_organization = OrganizationEntity(
+        new_organization = OrganizationEntity(
             **organization.model_dump()
-            )
-            session.add(new_organization)
-            await session.flush()  # Ensure the new organization gets an ID
-
-            account_organization = AccountOrganizationEntity(
-            account_id=creator_account_id,
-            organization_id=new_organization.organization_id
-            )
-            session.add(account_organization)
+        )
+        session.add(new_organization)
+        await session.flush()
         
+        account_organization = AccountOrganizationEntity(
+            organization_id=new_organization.organization_id,
+            account_id=creator_account_id
+        )
+        session.add(account_organization)
         await session.commit()
-        return new_organization.__dict__
+        return new_organization
 
     @async_db_request_handler
-    async def get_organizations_public(self, session: AsyncSession):
-        query = select(OrganizationEntity).where(OrganizationEntity.privacy =="Public")
+    async def get_organizations_public(self, session: AsyncSession, limit: int = 100, offset: int = 0, name: Optional[str] = None):
+        query = select(OrganizationEntity).where(OrganizationEntity.privacy == "Public")
+        if name is not None:
+            query = query.where(OrganizationEntity.name.ilike(f'%{name}%'))
+        query = query.limit(limit).offset(offset)
         result = await session.execute(query)
-        return result.scalars().all()
+        organizations = result.scalars().all()
+
+        total_query = select(func.count()).select_from(OrganizationEntity).where(OrganizationEntity.privacy == "Public")
+        if name is not None:
+            total_query = total_query.where(OrganizationEntity.name.ilike(f'%{name}%'))
+        total_result = await session.execute(total_query)
+        total = total_result.scalar()
+        next_offset, previous_offset = calculate_offsets(offset, limit, total)
+
+        return {
+            "items": organizations,
+            "previous": previous_offset,
+            "next": next_offset,
+            "total": total
+        }
     
     @async_db_request_handler
-    async def get_organizations_by_account_id(self, account_id: int, session: AsyncSession):
+    async def get_owned_organizations(self, account_id: int, session: AsyncSession, limit: int = 100, offset: int = 0, name: Optional[str] = None):
         query = select(OrganizationEntity).join(AccountOrganizationEntity).where(AccountOrganizationEntity.account_id == account_id)
+        if name is not None:
+            query = query.where(OrganizationEntity.name.ilike(f'%{name}%'))
+        query = query.limit(limit).offset(offset)
         result = await session.execute(query)
-        return result.scalars().all()
+        organizations = result.scalars().all()
+
+        total_query = select(func.count()).select_from(OrganizationEntity).join(AccountOrganizationEntity).where(AccountOrganizationEntity.account_id == account_id)
+        if name is not None:
+            total_query = total_query.where(OrganizationEntity.name.ilike(f'%{name}%'))
+        total_result = await session.execute(total_query)
+        total = total_result.scalar()
+        next_offset, previous_offset = calculate_offsets(offset, limit, total)
+
+        return {
+            "items": organizations,
+            "previous": previous_offset,
+            "next": next_offset,
+            "total": total
+        }
     
     @async_db_request_handler
     async def update_organization(self, organization_id: int, account_id: int, organization: OrganizationUpdate, session: AsyncSession):
@@ -54,13 +89,14 @@ class OrganizationService:
             return None
         
         for key, value in organization.model_dump().items():
-            setattr(organization_exist, key, value)
+            if value is not None:  # Only update fields that are not None
+                setattr(organization_exist, key, value)
         
         await session.commit()
         return organization_exist
 
     @async_db_request_handler
-    async def get_organization_by_name(self, organization_name: str, session: AsyncSession):
+    async def get_exist_organization_by_name(self, organization_name: str, session: AsyncSession):
         query = select(OrganizationEntity).where(OrganizationEntity.name == organization_name)
         result = await session.execute(query)
         return result.scalars().one_or_none()
@@ -94,13 +130,6 @@ class OrganizationService:
         await session.execute(delete_query)
         await session.commit()
        
-    
-    @async_db_request_handler
-    async def search_organization(self, organization_name: str, session: AsyncSession):
-        query = select(OrganizationEntity).filter(OrganizationEntity.name.ilike(f'%{organization_name}%'))
-        result = await session.execute(query)
-        return result.scalars().all()
-    
     @async_db_request_handler
     async def search_organization_by_account_id(self, account_id: int, organization_name: str, session: AsyncSession):
         query = select(OrganizationEntity).join(AccountOrganizationEntity).where(

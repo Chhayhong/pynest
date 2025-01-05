@@ -16,7 +16,7 @@ class AccountController:
 
     def __init__(self, account: AccountService):
         self.account = account
-
+        
     @Post("/")
     @handle_status_code_500_exceptions
     async def register(self, account: AccountCreate, session: AsyncSession = Depends(config.get_db)):

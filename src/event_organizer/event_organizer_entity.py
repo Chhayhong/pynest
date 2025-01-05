@@ -7,7 +7,7 @@ class EventOrganizer(config.Base):
     __tablename__ = "organizer"
 
     organizer_id:Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    full_name:Mapped[str] = mapped_column(String(64),unique=True,index=True)
+    full_name:Mapped[str] = mapped_column(String(64),index=True)
     email = mapped_column(String(64))
     event_role = mapped_column(String(120),default="General")
     detail = mapped_column(String(255))

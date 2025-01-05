@@ -48,6 +48,29 @@ class EventManagementBaseModel(BaseModel):
     updated_at: datetime
     privacy: str 
     organization: OrganizationResponse
+
+class EventManagementUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    location: Optional[str] = None
+    google_map: Optional[str] = None
+    speaker: Optional[List[Union[str, dict]]] = Field(default_factory=list)
+    sponsor: Optional[List[Union[str, dict]]] = Field(default_factory=list)
+    partner: Optional[List[Union[str, dict]]] = Field(default_factory=list)
+    status: Optional[str] = None
+    seat_limit: Optional[int] = None
+    event_setting: Optional[dict] = Field(default_factory=dict)
+    event_type: Optional[str] = None
+    event_language: Optional[str] = None
+    privacy: Optional[str] = None
+    
+    @model_validator(mode='after')
+    def check_privacy(self) -> Self:
+        if self.privacy and self.privacy not in ['Public', 'Private']:
+            raise ValueError('Privacy must be one of public or private')
+        return self
     
 
 class EventManagementResponse(BaseModel):

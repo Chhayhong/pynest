@@ -15,14 +15,14 @@ class AdminAccountController:
     def __init__(self, admin_account_service:AdminAccountService):
         self.admin_account_service = admin_account_service
 
-    @Get("/{limit=100}/{offset=0}", response_model=AccountResponseModelWithPaginations)
+    @Get("/", response_model=AccountResponseModelWithPaginations)
     @handle_status_code_500_exceptions
     @max_limit_query()
-    async def get_accounts(self,limit: Optional[int] = 100, offset: Optional[int] = 0, session: AsyncSession = Depends(config.get_db),current_account_id: int = Depends(get_current_account)):
+    async def get_accounts(self,limit: Optional[int] = 100, offset: Optional[int] = 0, session: AsyncSession = Depends(config.get_db),current_account_id: int = Depends(get_current_account),username: Optional[str] = None):
         authorized_account:AccountsResponse = await self.admin_account_service.get_account(current_account_id, session)
         if authorized_account.role != "admin":
             raise HTTPException(status_code=403, detail=Not_Authorized_Message)
-        accounts = await self.admin_account_service.get_accounts(session,limit,offset)
+        accounts = await self.admin_account_service.get_accounts(session,limit,offset,username)
         return accounts
     
     @Get("/{account_id}", response_model=AccountsResponse)
@@ -50,4 +50,3 @@ class AdminAccountController:
         updated_account = await self.admin_account_service.update_account(account_id, updated_account, session)
         return updated_account
     
-

@@ -72,7 +72,7 @@ class AccountService:
 
     def create_access_token(self, data: dict):
         to_encode = data.copy()
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         to_encode.update({"exp": expire})
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
         return encoded_jwt
@@ -90,7 +90,6 @@ class AccountService:
         
     @async_db_request_handler
     async def generate_refresh_token(self, username: str, session: AsyncSession):
-        print(username,'username')
         query = select(AccountEntity).where(
         AccountEntity.username == username)
         result = await session.execute(query)
@@ -116,7 +115,7 @@ class AccountService:
 
     def create_refresh_token(self, data: dict):
         to_encode = data.copy()
-        expire = datetime.utcnow() + timedelta(hours=ACCESS_REFRESH_TOKEN_MINUTES) 
+        expire = datetime.now() + timedelta(minutes=ACCESS_REFRESH_TOKEN_MINUTES)
         to_encode.update({"exp": expire})
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
         return encoded_jwt

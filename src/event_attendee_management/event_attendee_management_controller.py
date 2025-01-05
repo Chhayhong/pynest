@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from nest.core import Controller, Get, Post, Depends
+from nest.core import Controller, Get, Post, Depends,Patch
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..annotation.max_limit_query import max_limit_query
@@ -9,16 +9,18 @@ from src.config import config
 
 
 from .event_attendee_management_service import EventAttendeeManagementService
-from .event_attendee_management_model import AttendeeRegister
+from ..event_management.event_management_service import EventManagementService
+from .event_attendee_management_model import AttendeeRegister, AttendeeUpdate
 
 
 @Controller("v1/event_attendee", tag="Event attendee management")
 class EventAttendeeManagementController:
 
-    def __init__(self, event_attendee_management_service: EventAttendeeManagementService):
+    def __init__(self, event_attendee_management_service: EventAttendeeManagementService,event_management_service: EventManagementService):
         self.event_attendee_management_service = event_attendee_management_service
+        self.event_management_service = event_management_service
 
-    @Get("/participated/{limit=100}/{offset=0}")
+    @Get("/participated")
     @handle_status_code_500_exceptions
     @max_limit_query()
     async def get_my_participated_event(self,limit:int=100,offset:int=0,session: AsyncSession = Depends(config.get_db),current_account_id: int = Depends(get_current_account)):
@@ -35,9 +37,11 @@ class EventAttendeeManagementController:
         result = await self.event_attendee_management_service.add_event_attendee_management(event_id, current_account_id, event_attendee_register, session)
         return result
     
-    @Get("/managed_participant_list/{limit=100}/{offset=0}")
+    @Patch("/update/{event_id}/{attendee_id}")
     @handle_status_code_500_exceptions
-    @max_limit_query()
-    async def get_managed_participant_attendee_list(self, limit: int=100, offset: int=0, session: AsyncSession = Depends(config.get_db),current_account_id: int = Depends(get_current_account)):
-        return await self.event_attendee_management_service.get_managed_event_attendee_list(current_account_id,session,limit,offset)
+    async def update_attendee_info(self, event_id:int,attendee_id:int,attendee:AttendeeUpdate, session: AsyncSession = Depends(config.get_db),current_account_id: int = Depends(get_current_account)):
+        result = await self.event_attendee_management_service.update_attendee_info(event_id,attendee_id,current_account_id,attendee, session)
+        if not result:
+            raise HTTPException(status_code=404, detail="Event attendee not found")
+        return result
  
