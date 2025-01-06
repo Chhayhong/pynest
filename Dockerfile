@@ -1,4 +1,4 @@
-FROM python:3.9-alpine
+FROM python:3.10
 
 # Update the package list and install essential tools
 RUN apt-get update && \
