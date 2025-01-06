@@ -146,32 +146,35 @@ class EventAttendeeManagementService:
         attendee: AttendeeUpdate,
         session: AsyncSession
     ):
-        async with session.begin():
-            attendee_list_query = select(EventAttendeeListEntity).where(
-                EventAttendeeListEntity.attendee_id == attendee_id,
-                EventAttendeeListEntity.account_id == account_id,
-                EventAttendeeListEntity.event_id == event_id
-            )
-            attendee_list_result = await session.execute(attendee_list_query)
-            attendee_list_entry = attendee_list_result.scalars().first()
-
-            if not attendee_list_entry:
-                return False
-
-            query = select(AttendeeEntity).where(AttendeeEntity.attendee_id == attendee_id)
-            result = await session.execute(query)
-            existing_attendee = result.scalars().first()
-
-            if not existing_attendee:
-                return False
-
-            for key, value in attendee.model_dump().items():
-                if value is not None:
-                    setattr(existing_attendee, key, value)
-
-            await session.commit()  # Commit within the transaction
-
-            return existing_attendee.attendee_id
+        attendee_list_query = select(EventAttendeeListEntity).where(
+            EventAttendeeListEntity.attendee_id == attendee_id,
+            EventAttendeeListEntity.account_id == account_id,
+            EventAttendeeListEntity.event_id == event_id
+        )
+        attendee_list_result = await session.execute(attendee_list_query)
+        attendee_list_entry = attendee_list_result.scalars().first()
+    
+        if not attendee_list_entry:
+            return False
+    
+        query = select(AttendeeEntity).where(AttendeeEntity.attendee_id == attendee_id)
+        result = await session.execute(query)
+        existing_attendee = result.scalars().first()
+    
+        if not existing_attendee:
+            return False
+    
+        for key, value in attendee.model_dump().items():
+            if value is not None:
+                setattr(existing_attendee, key, value)
+    
+        # Start a new transaction if none is already active
+        if not session.is_active:
+            await session.begin()
+    
+        await session.commit()  # Commit within the transaction
+        
+        return existing_attendee.attendee_id
         
     @async_db_request_handler
     async def verify_registration_status(self, event_id: int, attendee_id: int,registration_status:str, session: AsyncSession):
