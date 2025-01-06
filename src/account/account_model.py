@@ -34,15 +34,17 @@ class Account(BaseModel):
     account_id: int
     username: str 
     email: Optional[EmailStr] 
-    role: str = "user"
+    role: str
     class Config:
         orm_mode = True
+
+
 
 class AccountsResponse(BaseModel):
     account_id: int
     username: str 
     email: Optional[EmailStr] 
-    role: str = "user"
+    role: str 
     is_active: bool
     class Config:
         orm_mode = True

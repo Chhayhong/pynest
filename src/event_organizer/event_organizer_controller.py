@@ -2,12 +2,13 @@ from typing import Optional
 from fastapi import HTTPException
 from nest.core import Controller, Get, Post, Depends,Patch
 from sqlalchemy.ext.asyncio import AsyncSession
-from ..authorization_utils import get_current_account,Not_Authorized_Message
+from src.shared_message_utils import DataOperationMessage
+from ..authorization_utils import get_current_account
 from src.config import config
 
 
 from .event_organizer_service import EventOrganizerService
-from .event_organizer_model import EventOrganizer, EventOrganizerUpdate
+from .event_organizer_model import EventOrganizer, EventOrganizerResponse, EventOrganizerUpdate
 
 
 @Controller("v1/event_organizer", tag="Event organizer")
@@ -16,11 +17,11 @@ class EventOrganizerController:
     def __init__(self, event_organizer_service: EventOrganizerService):
         self.event_organizer_service = event_organizer_service
 
-    @Get("/")
+    @Get("/",response_model=EventOrganizerResponse)
     async def get_event_managed_organizers(self, limit:Optional[int]=100,offset:Optional[int]=0, session: AsyncSession = Depends(config.get_db), current_account_id: int = Depends(get_current_account), full_name: str = None):
         return await self.event_organizer_service.get_event_organizers(current_account_id, session,limit,offset,full_name)
 
-    @Post("/{event_id}")
+    @Post("/{event_id}",response_model=DataOperationMessage)
     async def add_event_organizer(self, event_id:int,event_organizer: EventOrganizer, session: AsyncSession = Depends(config.get_db),current_account_id: int = Depends(get_current_account)):
         result = await self.event_organizer_service.add_event_organizer_to_owned_organization(event_id,current_account_id,event_organizer, session)
         if result == "Event not found or does not belong to your account":
@@ -36,10 +37,10 @@ class EventOrganizerController:
             return []
         return await self.event_organizer_service.get_event_organizer_by_event_id(event_id, session)
     
-    @Patch("/{event_id}/{organizer_id}")
+    @Patch("/{event_id}/{organizer_id}",response_model=DataOperationMessage)
     async def update_event_organizer(self, event_id:int, organizer_id:int, event_organizer: EventOrganizerUpdate, session: AsyncSession = Depends(config.get_db),current_account_id: int = Depends(get_current_account)):
         result = await self.event_organizer_service.update_event_organizer(event_id, organizer_id, event_organizer, session)
         if not result:
             raise HTTPException(status_code=404, detail="Event organizer not found")
-        return result
+        return {"detail": "Event or event organizer has been updated successfully"}
  

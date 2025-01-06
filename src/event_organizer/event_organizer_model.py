@@ -21,3 +21,19 @@ class EventOrganizerUpdate(BaseModel):
     telegram_url: Optional[str] = None
     facebook_url: Optional[str] = None
     phone: Optional[str] = None
+
+class EventOrganizerInfo(BaseModel):
+    organizer_id: int
+    full_name: str
+    email: str
+    event_role: str = "General"
+    detail: str
+    profile_picture: str
+    telegram_url: str
+    facebook_url: str
+    phone: str
+class EventOrganizerResponse(BaseModel):
+    items: list[EventOrganizerInfo]
+    previous: int
+    next: int
+    total: int

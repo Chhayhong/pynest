@@ -1,7 +1,7 @@
 from typing import Optional
 
 from ..utils import calculate_offsets
-from .organization_model import OrganizationCreate, OrganizationUpdate
+from .organization_model import OrganizationCreate, OrganizationResponse, OrganizationUpdate
 from .organization_entity import Organization as OrganizationEntity, AccountOrganization as AccountOrganizationEntity
 from nest.core.decorators.database import async_db_request_handler
 from nest.core import Injectable
@@ -76,7 +76,7 @@ class OrganizationService:
     
     @async_db_request_handler
     async def update_organization(self, organization_id: int, account_id: int, organization: OrganizationUpdate, session: AsyncSession):
-        organization_exist = await self.check_organization_exist(organization_id, session)
+        organization_exist:OrganizationResponse = await self.check_organization_exist(organization_id, session)
         if organization_exist is None:
             return None
         
@@ -93,11 +93,14 @@ class OrganizationService:
                 setattr(organization_exist, key, value)
         
         await session.commit()
-        return organization_exist
+        return organization_exist.organization_id
 
     @async_db_request_handler
-    async def get_exist_organization_by_name(self, organization_name: str, session: AsyncSession):
-        query = select(OrganizationEntity).where(OrganizationEntity.name == organization_name)
+    async def get_exist_organization_by_name(self, organization_name: str,account_id:int, session: AsyncSession):
+        query = select(OrganizationEntity).join(AccountOrganizationEntity).where(
+            OrganizationEntity.name == organization_name,
+            AccountOrganizationEntity.account_id == account_id
+            )
         result = await session.execute(query)
         return result.scalars().one_or_none()
 
