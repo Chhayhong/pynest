@@ -32,7 +32,7 @@ class EventAttendeeManagementService:
             return new_event_attendee.attendee_id
         except Exception as e:
             await session.rollback()
-            raise HTTPException(status_code=500, detail=str(e))
+            raise ValueError("An error occurred")
        
     @async_db_request_handler
     async def check_attendee_already_joined_event(self,account_id:int, event_id: int, session: AsyncSession):

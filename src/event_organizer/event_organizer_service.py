@@ -40,7 +40,7 @@ class EventOrganizerService:
         try:
             session.add(new_event_organizer)
             await session.commit()
-            return new_event_organizer.organizer_id
+            return new_event_organizer
         except Exception as e:
             await session.rollback()
             logging.error("Error creating event organizer: ", e)

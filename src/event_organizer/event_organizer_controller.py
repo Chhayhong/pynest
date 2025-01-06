@@ -17,9 +17,11 @@ class EventOrganizerController:
     def __init__(self, event_organizer_service: EventOrganizerService):
         self.event_organizer_service = event_organizer_service
 
-    @Get("/",response_model=EventOrganizerResponse)
+    @Get("/",response_model=DataOperationMessage)
     async def get_event_managed_organizers(self, limit:Optional[int]=100,offset:Optional[int]=0, session: AsyncSession = Depends(config.get_db), current_account_id: int = Depends(get_current_account), full_name: str = None):
-        return await self.event_organizer_service.get_event_organizers(current_account_id, session,limit,offset,full_name)
+        result = await self.event_organizer_service.get_event_organizers(current_account_id, session,limit,offset,full_name)
+        if result is None:
+            return {"detail": "Organixer has been added"}
 
     @Post("/{event_id}",response_model=DataOperationMessage)
     async def add_event_organizer(self, event_id:int,event_organizer: EventOrganizer, session: AsyncSession = Depends(config.get_db),current_account_id: int = Depends(get_current_account)):
