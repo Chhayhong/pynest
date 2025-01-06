@@ -30,10 +30,8 @@ class AccountController:
     @handle_status_code_500_exceptions
     async def login_for_token(self, account:OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(config.get_db)):
         account_exist = await self.account.check_account_exist(account, session)
-        if not account_exist:
-            raise HTTPException(status_code=401, detail="Account does not exist")
-        if not self.account.verify_password(account.password, account_exist.password):
-            raise HTTPException(status_code=401, detail="Incorrect password")
+        if not account_exist or not self.account.verify_password(account.password, account_exist.password):
+            raise HTTPException(status_code=401, detail="Incorrect username or password")
         access_token = self.account.create_access_token({"sub": account.username,"role":account_exist.role,"account_id":str(account_exist.account_id)})
         refresh_token = await self.account.generate_refresh_token(account_exist.username, session)
         return {"access_token": access_token, "token_type": "bearer", "refresh_token": refresh_token}

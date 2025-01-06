@@ -1,13 +1,14 @@
 from typing import Optional
 from fastapi import HTTPException
-from nest.core import Controller, Get, Post, Depends,Patch
+from nest.core import Controller, Get, Post, Depends,Patch,Delete
 from sqlalchemy.ext.asyncio import AsyncSession
+from src.shared_message_utils import DataOperationMessage
 from ..annotation.max_limit_query import max_limit_query
 from ..annotation.http_status_code_500_exception import handle_status_code_500_exceptions
 from ..authorization_utils import get_current_account
 from src.config import config
 from .organization_service import OrganizationService
-from .organization_model import DeleteOrganization, OrganizationCreate, OrganizationPaginations, OrganizationUpdate
+from .organization_model import OrganizationCreate, OrganizationPaginations, OrganizationUpdate
 
 
 @Controller("v1/organization", tag="Organization management")
@@ -24,24 +25,27 @@ class OrganizationController:
     
     # @Get("/{organization_id}")
 
-    @Post("/register", response_model=OrganizationCreate)
+    @Post("/register", response_model=DataOperationMessage)
     @handle_status_code_500_exceptions
     async def add_organization(self, organization: OrganizationCreate, session: AsyncSession = Depends(config.get_db),current_account_id: int = Depends(get_current_account)):
-        existing_organization = await self.organization_service.get_exist_organization_by_name(organization.name, session)
+        existing_organization = await self.organization_service.get_exist_organization_by_name(organization.name,current_account_id, session)
         if existing_organization:
             raise HTTPException(status_code=409, detail="Organization with the same name already exists")
-        return await self.organization_service.add_organization(current_account_id,organization, session)
+        result = await self.organization_service.add_organization(current_account_id,organization, session)
+        if result is not None:
+            return {"detail": "Organization registered successfully"}
     
     
-    @Patch("/update", response_model=OrganizationUpdate)
+    @Patch("/update", response_model=DataOperationMessage)
     @handle_status_code_500_exceptions
     async def update_organization(self, organization_id:str, organization: OrganizationUpdate, session:AsyncSession=Depends(config.get_db),current_account_id: int = Depends(get_current_account)):
         result = await self.organization_service.update_organization(organization_id,current_account_id, organization, session)
         if result is None:
             raise HTTPException(status_code=404, detail="Organization not found")
-        return result
+        if result is not None:
+            return {"detail": "Organization updated successfully"}
     
-    @Post("/delete", response_model=DeleteOrganization)
+    @Delete("/delete", response_model=DataOperationMessage)
     @handle_status_code_500_exceptions
     async def delete_organization(self, organization_id: int, session: AsyncSession=Depends(config.get_db),current_account_id: int = Depends(get_current_account)):
         organization = await self.organization_service.get_organization_by_id(organization_id, session)
@@ -53,5 +57,3 @@ class OrganizationController:
             raise HTTPException(status_code=500, detail="Failed to delete organization")
         
         return {"detail": "Organization deleted successfully"}
-
-    

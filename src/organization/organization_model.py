@@ -3,6 +3,8 @@ from typing import Optional
 from pydantic import BaseModel, model_validator
 from typing_extensions import Self
 
+from src.shared_message_utils import PRIVACY_VALUE_ERROR_MESSAGE
+
 class OrganizationCreate(BaseModel):
     name: str
     description: str
@@ -16,7 +18,7 @@ class OrganizationResponse(BaseModel):
     description: str
     address: str
     phone: str
-    privacy:str
+    privacy:str = "Private"
     created_at: datetime = datetime.now()
     updated_at: datetime = datetime.now()
 
@@ -36,9 +38,5 @@ class OrganizationUpdate(BaseModel):
     @model_validator(mode='after')
     def check_privacy(self) -> Self:
         if self.privacy and self.privacy not in ['Public', 'Private']:
-            raise ValueError('Privacy must be one of public or private')
+            raise ValueError(PRIVACY_VALUE_ERROR_MESSAGE)
         return self
-
-class DeleteOrganization(BaseModel):
-    detail: str = "Organization deleted successfully"
-

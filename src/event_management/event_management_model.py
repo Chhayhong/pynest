@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import List, Optional, Union
 from typing_extensions import Self
 from pydantic import BaseModel, Field, model_validator
+from src.shared_message_utils import PRIVACY_VALUE_ERROR_MESSAGE
 
 from ..organization.organization_model import OrganizationResponse  # Ensure this import is correct and the Organization class is defined in the specified module
 
@@ -25,7 +26,7 @@ class EventManagementCreate(BaseModel):
     @model_validator(mode='after')
     def check_privacy(self) -> Self:
         if self.privacy not in ['Public', 'Private']:
-            raise ValueError('Privacy must be one of public or private')
+            raise ValueError(PRIVACY_VALUE_ERROR_MESSAGE)
         return self
 
 class EventManagementBaseModel(BaseModel):   
@@ -69,7 +70,7 @@ class EventManagementUpdate(BaseModel):
     @model_validator(mode='after')
     def check_privacy(self) -> Self:
         if self.privacy and self.privacy not in ['Public', 'Private']:
-            raise ValueError('Privacy must be one of public or private')
+            raise ValueError(PRIVACY_VALUE_ERROR_MESSAGE)
         return self
     
 
@@ -78,5 +79,4 @@ class EventManagementResponse(BaseModel):
     previous: int
     next: int
     total: int
-
 
