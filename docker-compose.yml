@@ -6,6 +6,7 @@ services:
     volumes:
       - .:/app
     image: pynest-app
+    container_name: pynest-app
     depends_on:
       - db
     networks:
@@ -13,6 +14,7 @@ services:
     restart: unless-stopped
   db:
     image: postgres:13
+    container_name: db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 123
@@ -26,6 +28,7 @@ services:
       - app-network
   nginx:
       image: nginx:latest
+      container_name: nginx
       ports:
         - "80:80"
         - "443:443"
