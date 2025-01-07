@@ -48,7 +48,7 @@ http_server.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-templates_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../frontend"))
+templates_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../API_FrontPage"))
 templates = Jinja2Templates(directory=templates_dir)
 
 
