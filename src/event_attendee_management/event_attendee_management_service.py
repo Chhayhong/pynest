@@ -1,3 +1,4 @@
+import logging
 from fastapi import HTTPException
 from sqlalchemy.orm._orm_constructors import aliased
 
@@ -9,7 +10,7 @@ from .event_attendee_management_entity import AttendeeList as EventAttendeeListE
 from nest.core.decorators.database import async_db_request_handler
 from nest.core import Injectable
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select,distinct
 from sqlalchemy.ext.asyncio import AsyncSession
 
 @Injectable
@@ -57,7 +58,7 @@ class EventAttendeeManagementService:
     async def get_managed_event_attendee_list(self, account_id: int, session: AsyncSession, limit: int = 100, offset: int = 0):
         event_alias = aliased(EventManagementEntity)
         attendee_alias = aliased(AttendeeEntity)
-
+    
         query = select(
             event_alias.event_id,
             event_alias.name,
@@ -78,9 +79,11 @@ class EventAttendeeManagementService:
             event_alias.name,
             attendee_alias.attendee_id
         ).order_by(event_alias.event_id).limit(limit).offset(offset)
-
+    
         result = await session.execute(query)
         attendees_by_event = {}
+        seen_attendees = set()  # set to store seen attendee ids
+    
         for event_id, name, attendee in result.all() or []:
             if event_id not in attendees_by_event:
                 attendees_by_event[event_id] = {
@@ -88,29 +91,33 @@ class EventAttendeeManagementService:
                     "event_id": event_id,
                     "attendees": []
                 }
-            attendees_by_event[event_id]["attendees"].append(attendee)
-
-        total_subquery = select(func.count()).select_from(
+            attendee_id = attendee.attendee_id  # assuming attendee has an attendee_id field
+            if attendee_id not in seen_attendees:
+                seen_attendees.add(attendee_id)
+                attendees_by_event[event_id]["attendees"].append(attendee)
+    
+        # Calculate total count
+        total_query = select(func.count(distinct(EventAttendeeListEntity.event_id))).select_from(
             EventAttendeeListEntity
         ).join(
-            event_alias,
-            EventAttendeeListEntity.event_id == event_alias.event_id
-        ).outerjoin(
+            EventManagementEntity,
+            EventManagementEntity.event_id == EventAttendeeListEntity.event_id
+        ).join(
             AccountOrganizationEntity,
-            AccountOrganizationEntity.organization_id == event_alias.organization_id
+            AccountOrganizationEntity.organization_id == EventManagementEntity.organization_id
         ).where(
             AccountOrganizationEntity.account_id == account_id
-        ).subquery()
-
-        total_query = select(func.count()).select_from(total_subquery)
+        )
         total_result = await session.execute(total_query)
         total = total_result.scalar()
+    
+        # Calculate next and previous offsets
         next_offset, previous_offset = calculate_offsets(offset, limit, total)
-
+    
         return {
             "items": attendees_by_event,
-            "previous": int(previous_offset or 0),
-            "next": int(next_offset or 0),
+            "previous": previous_offset,
+            "next": next_offset,
             "total": int(total or 0)
         }
        

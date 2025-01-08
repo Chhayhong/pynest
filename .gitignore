@@ -4,5 +4,5 @@ __pycache__
 *.pyd
 .DS_Store
 .env
-my_venv
 certs
+venv
