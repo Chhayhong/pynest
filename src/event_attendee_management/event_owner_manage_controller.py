@@ -20,8 +20,8 @@ class EventOwnerManageController:
     @Get("/managed_participant_list")
     @handle_status_code_500_exceptions
     @max_limit_query()
-    async def get_managed_participant_attendee_list(self, limit: int=100, offset: int=0, session: AsyncSession = Depends(config.get_db),current_account_id: int = Depends(get_current_account)):
-        return await self.event_attendee_management_service.get_managed_event_attendee_list(current_account_id,session,limit,offset)
+    async def get_managed_participant_attendee_list(self ,event_id:int,limit: int=100, offset: int=0, session: AsyncSession = Depends(config.get_db),current_account_id: int = Depends(get_current_account)):
+        return await self.event_attendee_management_service.get_managed_attendee_list_by_owned_event(current_account_id,event_id,session,limit,offset)
     
     @Patch("/approve/registration_status/{event_id}/{attendee_id}")
     @handle_status_code_500_exceptions

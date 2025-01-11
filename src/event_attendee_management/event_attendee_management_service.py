@@ -1,3 +1,4 @@
+import logging
 from fastapi import HTTPException
 from sqlalchemy.orm._orm_constructors import aliased
 
@@ -6,10 +7,10 @@ from ..event_management.event_management_entity import EventManagement as EventM
 from ..organization.organization_entity import AccountOrganization as AccountOrganizationEntity
 from .event_attendee_management_model import AttendeeRegister, AttendeeUpdate
 from .event_attendee_management_entity import AttendeeList as EventAttendeeListEntity, Attendee as AttendeeEntity
+from ..account.account_entity import Account as AccountEntity
 from nest.core.decorators.database import async_db_request_handler
 from nest.core import Injectable
-
-from sqlalchemy import func, select
+from sqlalchemy import func, select,text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 @Injectable
@@ -54,66 +55,46 @@ class EventAttendeeManagementService:
         return True
 
     @async_db_request_handler
-    async def get_managed_event_attendee_list(self, account_id: int, session: AsyncSession, limit: int = 100, offset: int = 0):
-        event_alias = aliased(EventManagementEntity)
-        attendee_alias = aliased(AttendeeEntity)
+    async def get_managed_attendee_list_by_owned_event(self, account_id: int,event_id,  session: AsyncSession, limit: int = 100, offset: int = 0):
+        sql = text("""
+            SELECT a.*, atl.registration_status, atl.registration_time
+            FROM attendee a
+            JOIN attendee_list atl ON a.attendee_id = atl.attendee_id
+            JOIN event e ON atl.event_id = e.event_id
+            JOIN account_organization ao ON e.organization_id = ao.organization_id
+            JOIN account acc ON ao.account_id = acc.account_id
+            WHERE atl.event_id = :event_id AND acc.account_id = :account_id
+            LIMIT :limit OFFSET :offset
+        """)
 
-        query = select(
-            event_alias.event_id,
-            event_alias.name,
-            attendee_alias
-        ).join(
-            EventAttendeeListEntity,
-            EventAttendeeListEntity.attendee_id == attendee_alias.attendee_id
-        ).join(
-            event_alias,
-            EventAttendeeListEntity.event_id == event_alias.event_id
-        ).outerjoin(
-            AccountOrganizationEntity,
-            AccountOrganizationEntity.organization_id == event_alias.organization_id
-        ).where(
-            AccountOrganizationEntity.account_id == account_id
-        ).group_by(
-            event_alias.event_id,
-            event_alias.name,
-            attendee_alias.attendee_id
-        ).order_by(event_alias.event_id).limit(limit).offset(offset)
+        result = await session.execute(sql, {"event_id": event_id, "account_id": account_id, "limit": limit, "offset": offset})
 
-        result = await session.execute(query)
-        attendees_by_event = {}
-        for event_id, name, attendee in result.all() or []:
-            if event_id not in attendees_by_event:
-                attendees_by_event[event_id] = {
-                    "name": name,
-                    "event_id": event_id,
-                    "attendees": []
-                }
-            attendees_by_event[event_id]["attendees"].append(attendee)
+        attendees = [
+            dict(row._mapping) for row in result.fetchall()
+        ]
 
-        total_subquery = select(func.count()).select_from(
-            EventAttendeeListEntity
-        ).join(
-            event_alias,
-            EventAttendeeListEntity.event_id == event_alias.event_id
-        ).outerjoin(
-            AccountOrganizationEntity,
-            AccountOrganizationEntity.organization_id == event_alias.organization_id
-        ).where(
-            AccountOrganizationEntity.account_id == account_id
-        ).subquery()
+        count_sql = text("""
+            SELECT COUNT(*) 
+            FROM attendee a
+            JOIN attendee_list atl ON a.attendee_id = atl.attendee_id
+            JOIN event e ON atl.event_id = e.event_id
+            JOIN account_organization ao ON e.organization_id = ao.organization_id
+            JOIN account acc ON ao.account_id = acc.account_id
+            WHERE atl.event_id = :event_id AND acc.account_id = :account_id
+        """)
 
-        total_query = select(func.count()).select_from(total_subquery)
-        total_result = await session.execute(total_query)
-        total = total_result.scalar()
+        count_result = await session.execute(count_sql, {"event_id": event_id, "account_id": account_id})
+        total = count_result.scalar()
         next_offset, previous_offset = calculate_offsets(offset, limit, total)
 
         return {
-            "items": attendees_by_event,
-            "previous": int(previous_offset or 0),
-            "next": int(next_offset or 0),
+            "items": attendees,
+            "previous": previous_offset,
+            "next": next_offset,
             "total": int(total or 0)
         }
-       
+
+
     @async_db_request_handler
     async def get_my_participated_event(self,account_id:int, session: AsyncSession, limit: int = 100, offset: int = 0):
         query = select(EventManagementEntity,AccountOrganizationEntity,EventAttendeeListEntity).where(
