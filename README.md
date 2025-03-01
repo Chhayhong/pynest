@@ -31,4 +31,5 @@ uvicorn "app:app" --host "0.0.0.0" --port "8000" --reload
 Go to the fastapi docs and use your api endpoints - http://127.0.0.1/docs
 # pynest
 
-source venv/bin/activate
+macos: source venv/bin/activate
+window  : venv\Scripts\activate
