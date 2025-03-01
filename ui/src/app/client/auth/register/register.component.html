@@ -1,0 +1,45 @@
+<div class="top-space"></div>
+<div class="auth-container" [formGroup]="registrationAccountForm">
+    <h2>Register new account</h2>
+    <mat-form-field appearance="outline">
+        <mat-label>Username</mat-label>
+        <input formControlName="username" matInput type="text" placeholder="Username">
+    </mat-form-field>
+      
+
+    <mat-form-field appearance="outline">
+      <mat-label>Enter your password</mat-label>
+      <input formControlName="password" matInput [type]="hide() ? 'password' : 'text'" />
+      <button
+        mat-icon-button
+        matSuffix
+        (click)="clickEvent($event,'password')"
+        [attr.aria-label]="'Hide password'"
+        [attr.aria-pressed]="hide()"
+      >
+        <mat-icon>{{hide() ? 'visibility_off' : 'visibility'}}</mat-icon>
+      </button>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+        <mat-label>Confirm your password</mat-label>
+        <input formControlName="confirm_password" matInput [type]="confirmPasswordHide() ? 'password' : 'text'" />
+        <button
+          mat-icon-button
+          matSuffix
+          (click)="clickEvent($event,'confirmPassword')"
+          [attr.aria-label]="'Hide confirm password'"
+          [attr.aria-pressed]="confirmPasswordHide()"
+        >
+          <mat-icon>{{confirmPasswordHide() ? 'visibility_off' : 'visibility'}}</mat-icon>
+        </button>
+      </mat-form-field>
+      <div class="footer-section">
+        <button [disabled]="registrationAccountForm.invalid" color="primary" mat-flat-button (click)="onSave()">Register</button>
+      </div>
+      <div class="footer-section">
+        <span>Already have an account?</span>
+        <a mat-button routerLink="/login">login</a>
+      </div>
+  </div>
+  

@@ -1,0 +1,31 @@
+@use 'variable.scss' as *;
+.auth-container {
+    padding: 50px;
+    height: 450px;
+    text-align: center;
+    width: 500px;
+    margin: 0 auto;
+    border-style:$border-style;
+    border-color:$border-color;
+  }
+  .auth-container h2{
+    margin-bottom: 50px;
+    text-align: center;
+  }
+  
+  .top-space {
+    min-height: 20px;
+    max-height: 50px;
+  }
+  
+  .auth-container mat-form-field {
+    display: flex;
+    flex-direction: column;
+    margin: 0 auto;
+    justify-content: center;
+    max-width: 400px;
+  }
+  
+  .footer-section {
+    margin: 15px 0;
+  }
