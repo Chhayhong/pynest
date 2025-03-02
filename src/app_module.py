@@ -40,7 +40,7 @@ app = PyNestFactory.create(
     debug=True,
 )
 http_server = app.get_server()
-origins = ["*"]
+origins = ["*"] #cors not working
 http_server.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
