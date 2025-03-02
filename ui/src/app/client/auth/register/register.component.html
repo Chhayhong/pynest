@@ -35,11 +35,11 @@
         </button>
       </mat-form-field>
       <div class="footer-section">
-        <button [disabled]="registrationAccountForm.invalid" color="primary" mat-flat-button (click)="onSave()">Register</button>
+        <button [disabled]="registrationAccountForm.invalid" color="primary" mat-flat-button (click)="onRegister()">Register</button>
       </div>
       <div class="footer-section">
         <span>Already have an account?</span>
-        <a mat-button routerLink="/login">login</a>
+        <a mat-button routerLink="/auth/login">login</a>
       </div>
   </div>
   

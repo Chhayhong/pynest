@@ -1,14 +1,14 @@
 <div class="top-space"></div>
-<div class="auth-container">
+<form class="auth-container" [formGroup]="loginForm">
     <h2>Login account</h2>
     <mat-form-field appearance="outline">
         <mat-label>Username</mat-label>
-        <input matInput type="text" placeholder="Username">
+        <input matInput type="text" placeholder="Username" formControlName="username"/>
     </mat-form-field>
       
     <mat-form-field appearance="outline">
       <mat-label>Enter your password</mat-label>
-      <input matInput [type]="hide() ? 'password' : 'text'" />
+      <input formControlName="password" matInput [type]="hide() ? 'password' : 'text'" />
       <button
         mat-icon-button
         matSuffix
@@ -21,11 +21,11 @@
     </mat-form-field>
 
       <div class="footer-section">
-        <button color="primary" mat-flat-button>Login</button>
+        <button color="primary" mat-flat-button (click)="onLogin()">Login</button>
       </div>
       <div class="footer-section">
         <span>Does not have account?</span>
-        <a mat-button routerLink="/register">Register</a>
+        <a mat-button routerLink="/auth/register">Register</a>
       </div>
-  </div>
+    </form>
   
